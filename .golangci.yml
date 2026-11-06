@@ -1,0 +1,34 @@
+version: "2"
+
+linters:
+  enable:
+    - bodyclose
+    - errorlint
+    - gosec
+    - misspell
+    - noctx
+    - unconvert
+  settings:
+    errcheck:
+      exclude-functions:
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
+        - (io.Closer).Close
+        - (*os.File).Close
+        - (*database/sql.DB).Close
+        - (*database/sql.Rows).Close
+        - (*github.com/ahmettsezis/flui/internal/store.Store).Close
+        - os.Remove
+    gosec:
+      excludes:
+        - G104 # unhandled errors: covered by errcheck
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters: [bodyclose, gosec, noctx, errcheck]
+
+formatters:
+  enable:
+    - gofmt
+    - goimports

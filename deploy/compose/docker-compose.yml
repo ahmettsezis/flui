@@ -1,0 +1,22 @@
+# flui with Docker Compose. See docs/installation.md.
+# First login: docker compose logs flui | grep "initial admin password"
+services:
+  flui:
+    image: ghcr.io/ahmettsezis/flui:latest
+    restart: unless-stopped
+    ports:
+      - "8443:8443"
+    volumes:
+      - flui-data:/data
+      # Own certificate (recommended):
+      # - ./tls:/etc/flui/tls:ro
+    # environment:
+    #   FLUI_SERVER_PUBLIC_URL: https://flui.example.com:8443
+    #   FLUI_SERVER_TLS_CERT_FILE: /etc/flui/tls/flui.crt
+    #   FLUI_SERVER_TLS_KEY_FILE: /etc/flui/tls/flui.key
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+
+volumes:
+  flui-data:

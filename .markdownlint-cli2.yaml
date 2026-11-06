@@ -1,0 +1,8 @@
+config:
+  default: true
+  MD013: false # line length
+  MD040: false # fenced code language (Fluentd config has no highlighter)
+  MD060: false # table column style
+ignores:
+  - "node_modules/**"
+  - "web/node_modules/**"
