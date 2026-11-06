@@ -16,7 +16,10 @@ import (
 	"time"
 
 	"github.com/ahmettsezis/flui/internal/api"
+	"github.com/ahmettsezis/flui/internal/auth"
+	"github.com/ahmettsezis/flui/internal/collector"
 	"github.com/ahmettsezis/flui/internal/config"
+	"github.com/ahmettsezis/flui/internal/nodes"
 	"github.com/ahmettsezis/flui/internal/pki"
 	"github.com/ahmettsezis/flui/internal/secret"
 	"github.com/ahmettsezis/flui/internal/store"
@@ -63,7 +66,6 @@ func Run(ctx context.Context, cfg config.Config, log *slog.Logger, ln net.Listen
 	}
 	if st, err := os.Stat(cfg.DataDir); err == nil && st.Mode().Perm()&0o077 != 0 {
 		if err := os.Chmod(cfg.DataDir, 0o700); err != nil { //nolint:gosec // directory needs the execute bit
-
 			log.Warn("data_dir is accessible by other users; restrict it with chmod 0700", "data_dir", cfg.DataDir, "err", err)
 		}
 	}
@@ -97,8 +99,30 @@ func Run(ctx context.Context, cfg config.Config, log *slog.Logger, ln net.Listen
 		return err
 	}
 
+	authSvc, err := auth.NewService(st.DB, cfg.Auth)
+	if err != nil {
+		return err
+	}
+	pwFile := InitialPasswordFile(cfg)
+	if err := bootstrapAdmin(ctx, authSvc, pwFile, log); err != nil {
+		return err
+	}
+	repo := nodes.NewRepo(st.DB)
+	coll := collector.New(st.DB, repo, cfg.Collector, log)
+	go coll.Run(ctx)
+	go runJobs(ctx, cfg, st.DB, authSvc, log)
+
+	handler := api.New(api.Options{
+		DB: st, SQL: st.DB, Logger: log, UI: webui.FS(), Auth: authSvc, Nodes: repo, Collector: coll, Config: cfg,
+		OnPasswordChanged: func(*auth.User) {
+			if err := os.Remove(pwFile); err == nil {
+				log.Info("removed initial admin password file", "path", pwFile)
+			}
+		},
+	})
+
 	srv := &http.Server{
-		Handler:           api.New(api.Options{DB: st, Logger: log, UI: webui.FS()}),
+		Handler:           handler,
 		TLSConfig:         TLSConfig(certs.GetCertificate),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,

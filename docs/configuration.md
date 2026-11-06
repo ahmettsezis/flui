@@ -48,7 +48,7 @@ retention:
 | `auth.password_min_length` | `12` | Minimum password length |
 | `auth.lockout_threshold` | `5` | Failed sign-ins before the account is locked |
 | `auth.lockout_duration` | `15m` | How long the account stays locked |
-| `auth.require_totp_for_admins` | `false` | Force admins to enable two-factor authentication |
+| `auth.require_totp_for_admins` | `false` | Force admins to enable two-factor authentication (TOTP enrolment arrives in a later release) |
 
 ## Collection
 

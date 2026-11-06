@@ -4,7 +4,7 @@ A minimal, secure web UI for monitoring one or more [Fluentd](https://www.fluent
 
 - **Buffers & throughput** – queue/stage size, available buffer space, retries, records/s per output plugin.
 - **System resources** – CPU, memory, disk and network of the Fluentd host (agent mode).
-- **Fluentd logs** – warnings and errors from Fluentd itself, searchable and live-tailed.
+- **Fluentd logs** – warnings and errors from Fluentd itself, searchable and live-tailed *(later release)*.
 - **Easy to run** – a single static binary with an embedded UI and SQLite. No external database, no Prometheus.
 - **Secure by default** – TLS everywhere, Argon2id passwords, optional TOTP 2FA, role-based access, audit log.
 

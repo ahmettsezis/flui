@@ -96,8 +96,7 @@ docker logs flui 2>&1 | grep "initial admin password"  # Docker
 1. Open `https://<host>:8443`. With the default self-signed certificate your browser will warn once;
    compare the fingerprint with `flui-server tls fingerprint`, or [use your own certificate](configuration.md#tls).
 2. Sign in as `admin`. You must set a new password; the initial password file is deleted.
-3. Optional: enable TOTP under **Profile → Two-factor authentication**.
-4. Add Fluentd nodes: [agentless](agentless.md) or [agent](agent.md).
+3. Add Fluentd nodes: [agentless](agentless.md) or [agent](agent.md).
 
 ## Upgrade
 

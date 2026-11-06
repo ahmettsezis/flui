@@ -13,3 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   `backup` command, master key encryption, internal CA with automatic self-signed server certificate,
   HTTPS (TLS 1.2+) with security headers, `/healthz` and `/readyz`, embedded web UI.
 - Container image (distroless, non-root) and Docker Compose example.
+- Local users and sign-in: Argon2id hashing, server-side sessions, CSRF and origin checks, account lockout,
+  login rate limiting, roles (admin / operator / viewer), bootstrap admin with forced password change,
+  `flui-server user reset-password`, audit log.
+- Agentless node management: add, edit, delete and test Fluentd nodes from the UI; the collector polls
+  `monitor_agent` (multi-worker aware) and stores buffer, retry and throughput metrics with retention.
+- UI: sign-in, node overview, node detail with per-plugin charts (uPlot), generated `monitor_agent` snippet,
+  light and dark theme.

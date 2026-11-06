@@ -9,7 +9,7 @@ To report a vulnerability, see [SECURITY.md](../SECURITY.md).
 |---|---|
 | Transport | HTTPS only, TLS 1.2+ (TLS 1.3 preferred), modern ciphers, HSTS |
 | Passwords | Argon2id hashing, minimum length 12 |
-| Two-factor | TOTP (RFC 6238), optional per user, can be required for admins |
+| Two-factor | TOTP (RFC 6238), optional per user, can be required for admins *(later release)* |
 | Brute force | Per-IP and per-account rate limiting, account lockout after 5 failures |
 | Sessions | Server-side, random 256-bit IDs; cookies `HttpOnly; Secure; SameSite=Strict`; idle and absolute timeouts |
 | CSRF | Token required on every state-changing request |
@@ -43,7 +43,7 @@ To report a vulnerability, see [SECURITY.md](../SECURITY.md).
 2. **flui → `monitor_agent` (agentless):** plain HTTP without authentication – a limitation of Fluentd.
    Restrict it to the flui server at network level ([how](agentless.md#network-and-firewall)) or use the agent.
 3. **Agent → flui:** mutual TLS. The agent only makes outbound connections.
-4. **Fluentd → flui (log push):** HTTPS with a per-node bearer token. Tokens can be rotated per node.
+4. **Fluentd → flui (log push, later release):** HTTPS with a per-node bearer token. Tokens can be rotated per node.
 
 Log lines from Fluentd are treated as untrusted input: they are size-limited, stored as data and always
 escaped when rendered.

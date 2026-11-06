@@ -9,8 +9,8 @@ CPU, memory, disk and network are **not** available in this mode. Use the [agent
 
 ## 1. Add the node in flui
 
-**Nodes → Add node → Agentless**, enter a name and the monitor URL (for example `http://10.0.0.21:24220`).
-flui generates the two snippets below with a node-specific token already filled in. The token is shown once.
+**Nodes → Add node**, enter a name and the monitor URL (for example `http://10.0.0.21:24220`).
+flui shows the `monitor_agent` snippet below after the node is created.
 
 ## 2. Enable metrics (`monitor_agent`)
 
@@ -27,6 +27,9 @@ flui generates the two snippets below with a node-specific token already filled 
 (24220, 24221, …). Set **Workers = N** on the node in flui and all of them are collected.
 
 ## 3. Ship Fluentd logs (`out_http`)
+
+> **Available in a later release.** This section documents how Fluentd's own logs will be shipped to flui;
+> the endpoint and the per-node token are not implemented yet.
 
 ```
 <label @FLUENT_LOG>

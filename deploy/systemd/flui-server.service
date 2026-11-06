@@ -1,0 +1,42 @@
+# Install: sudo install -m 0644 flui-server.service /etc/systemd/system/
+# Requires: user flui, /var/lib/flui owned by flui:flui (see docs/installation.md)
+[Unit]
+Description=flui - Fluentd monitoring
+Documentation=https://github.com/ahmettsezis/flui
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=flui
+Group=flui
+ExecStart=/usr/bin/flui-server serve --config /etc/flui/flui.yaml
+Restart=on-failure
+RestartSec=5
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+LockPersonality=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+MemoryDenyWriteExecute=true
+ReadWritePaths=/var/lib/flui
+AmbientCapabilities=
+CapabilityBoundingSet=
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

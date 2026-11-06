@@ -14,6 +14,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/ahmettsezis/flui/internal/auth"
 	"github.com/ahmettsezis/flui/internal/config"
 	"github.com/ahmettsezis/flui/internal/pki"
 	"github.com/ahmettsezis/flui/internal/server"
@@ -27,6 +28,8 @@ Commands:
   serve             Run the server (default)
   backup <file>     Write a consistent snapshot of the database to <file>
   tls fingerprint   Print the SHA-256 fingerprints of the server certificate and internal CA
+  user reset-password <username>
+                    Set a new random password (must be changed at next sign-in) and unlock the account
   version           Print version information
 
 Options:
@@ -50,6 +53,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		err = cmdBackup(args, stdout)
 	case "tls":
 		err = cmdTLS(args, stdout)
+	case "user":
+		err = cmdUser(args, stdout)
 	case "version":
 		_, err = fmt.Fprintln(stdout, "flui-server", version.String())
 	case "help":
@@ -131,6 +136,41 @@ func cmdBackup(args []string, stdout io.Writer) error {
 		return err
 	}
 	_, err = fmt.Fprintln(stdout, "backup written to", rest[0])
+	return err
+}
+
+func cmdUser(args []string, stdout io.Writer) error {
+	if len(args) == 0 || args[0] != "reset-password" {
+		return usageError("usage: flui-server user reset-password <username>")
+	}
+	cfg, rest, err := parse("user", args[1:])
+	if err != nil {
+		return err
+	}
+	if len(rest) != 1 {
+		return usageError("usage: flui-server user reset-password <username>")
+	}
+	if _, err := os.Stat(filepath.Join(cfg.DataDir, store.FileName)); errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("no database found in %s", cfg.DataDir)
+	}
+	ctx := context.Background()
+	st, err := store.Open(ctx, cfg.DataDir)
+	if err != nil {
+		return err
+	}
+	defer st.Close()
+	if _, err := st.Migrate(ctx); err != nil {
+		return err
+	}
+	svc, err := auth.NewService(st.DB, cfg.Auth)
+	if err != nil {
+		return err
+	}
+	pw, err := svc.ResetPassword(ctx, rest[0])
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(stdout, "New password for %s: %s\nIt must be changed at the next sign-in.\n", rest[0], pw)
 	return err
 }
 

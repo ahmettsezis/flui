@@ -1,0 +1,32 @@
+# flui-server configuration example. All settings are optional; see docs/configuration.md.
+server:
+  listen: ":8443"
+  # public_url: "https://flui.example.com:8443"
+  # tls:
+  #   cert_file: /etc/flui/tls/flui.crt
+  #   key_file: /etc/flui/tls/flui.key
+
+data_dir: /var/lib/flui
+# master_key_file: /var/lib/flui/master.key
+
+# log:
+#   level: info
+#   format: json
+
+# auth:
+#   session_idle_timeout: 30m
+#   session_max_lifetime: 12h
+#   password_min_length: 12
+#   lockout_threshold: 5
+#   lockout_duration: 15m
+
+# collector:
+#   interval: 10s
+#   timeout: 5s
+#   stale_after: 30s
+
+# retention:
+#   raw: 2d
+#   minute: 30d
+#   hour: 365d
+#   logs: 30d
