@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Node details now show aggregate charts and a searchable, sortable output table with activity filters.
+  Plugin charts open on selection instead of rendering every plugin at once.
+- Explain generated Fluentd IDs, missing metrics, buffer percentages and retry counters in the dashboard.
+
 ### Added
 
 - Project documentation and repository layout.

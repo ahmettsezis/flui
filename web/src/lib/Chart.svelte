@@ -4,6 +4,7 @@
 
   let { title, ts, series, height = 170, percent = false } = $props();
   let el = $state(), chart = null, observer = null;
+  const axisNumber = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
 
   function styleVar(name) {
     return getComputedStyle(el).getPropertyValue(name).trim();
@@ -18,7 +19,9 @@
       scales: { x: { time: true }, y: { auto: true, range: percent ? [0, 100] : undefined } },
       axes: [
         { stroke: fg, grid: { stroke: 'rgba(128,128,128,0.15)' }, ticks: { stroke: 'rgba(128,128,128,0.3)' } },
-        { stroke: fg, grid: { stroke: 'rgba(128,128,128,0.15)' }, size: 46, ticks: { stroke: 'rgba(128,128,128,0.3)' } },
+        { stroke: fg, grid: { stroke: 'rgba(128,128,128,0.15)' }, size: 64,
+          values: (_, ticks) => ticks.map(v => axisNumber.format(v)),
+          ticks: { stroke: 'rgba(128,128,128,0.3)' } },
       ],
       series: [{}, ...series],
       legend: { show: series.length > 1 },

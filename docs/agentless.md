@@ -105,3 +105,33 @@ Per output plugin, from `/api/plugins.json`:
 
 A node is shown as **Down** when it cannot be reached and **Stale** when no data arrived within
 `collector.stale_after` (see [configuration](configuration.md)).
+
+## Reading the node dashboard
+
+The overview charts aggregate all reported output plugins and workers. Buffered bytes, queued chunks and
+record rates are summed by timestamp; free buffer is the **lowest** reported percentage, not disk space.
+Missing values are excluded, not treated as zero. Buffer charts sum each plugin's peak in each time bucket,
+so they are not an exact simultaneous peak. Output rates can count the same record more than once if it
+passes through multiple outputs.
+
+The plugin table shows each plugin's latest bucket in the selected range. Search by ID, type or worker;
+click a column heading to sort. **Attention first** prioritizes plugins with increasing retries or less
+than 10% free buffer. The activity filter includes these plus plugins with buffered data or output activity.
+The retry counter is cumulative and does not alone indicate a current failure. **Earlier sample** marks
+plugins absent from the newest bucket; these are excluded from activity filters.
+Select a plugin name to open its charts. Only one plugin's charts are open at a time.
+
+**Up** means the monitor endpoint is reachable, not that every output delivered its records successfully.
+Zero buffered bytes can mean no traffic or fast flushing; use throughput and retries alongside it.
+Check the last collection time when a node is down or stale.
+
+### Plugin names without `@id`
+
+Metrics work without `@id`. Fluentd then reports generated IDs such as `object:698`, which can change on
+restart and cannot reliably identify a log route. With `include_config false`, flui cannot infer the match
+tag or OpenSearch index from these IDs. Keep this setting: exposing the config may expose credentials.
+
+For stable names and continuous history, give each output a unique `@id`, for example `@id out_access`
+inside its `<match>` block. Existing history under a generated ID remains under that old ID.
+A manual alias for a generated ID would require remapping after ID changes; aliases and config import
+are not currently implemented.
