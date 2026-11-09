@@ -1,5 +1,5 @@
 let csrfToken = null;
-export let session = $state({ user: null, ready: false });
+export const session = $state({ user: null, ready: false });
 
 export function setSession(user, csrf) {
   session.user = user;

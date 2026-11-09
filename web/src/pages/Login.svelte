@@ -1,5 +1,5 @@
 <script>
-  import { login } from '../lib/api.js';
+  import { login } from '../lib/api.svelte.js';
   let username = $state(''), password = $state(''), error = $state(''), busy = $state(false);
 
   async function submit(e) {

@@ -1,5 +1,5 @@
 <script>
-  import { session, refreshSession, logout, navigate } from './lib/api.js';
+  import { session, refreshSession, logout, navigate } from './lib/api.svelte.js';
   import Login from './pages/Login.svelte';
   import PasswordChange from './pages/PasswordChange.svelte';
   import NodeList from './pages/NodeList.svelte';

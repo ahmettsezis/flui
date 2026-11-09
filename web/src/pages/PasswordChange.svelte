@@ -1,5 +1,5 @@
 <script>
-  import { api, session, logout } from '../lib/api.js';
+  import { api, session, logout } from '../lib/api.svelte.js';
   let current = $state(''), next = $state(''), again = $state(''), error = $state(''), busy = $state(false);
 
   async function submit(e) {

@@ -1,5 +1,5 @@
 <script>
-  import { api, bytes, rate, num, navigate, session } from '../lib/api.js';
+  import { api, bytes, rate, num, navigate, session } from '../lib/api.svelte.js';
   import Chart from '../lib/Chart.svelte';
   import NodeForm from './NodeForm.svelte';
 

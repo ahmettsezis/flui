@@ -1,5 +1,5 @@
 <script>
-  import { api, bytes, rate, num } from '../lib/api.js';
+  import { api, bytes, rate, num } from '../lib/api.svelte.js';
   let nodes = $state(null), error = $state('');
 
   async function load() {

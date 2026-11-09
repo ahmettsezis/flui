@@ -1,6 +1,6 @@
 <script>
   import { untrack } from 'svelte';
-  import { api, navigate } from '../lib/api.js';
+  import { api, navigate } from '../lib/api.svelte.js';
 
   let { id = null, node = null } = $props();
   let name = $state(untrack(() => node?.name ?? ''));
