@@ -42,7 +42,7 @@ func runJobs(ctx context.Context, cfg config.Config, db *sql.DB, svc *auth.Servi
 	defer t.Stop()
 	for {
 		now := time.Now()
-		if n, err := collector.Prune(ctx, db, now.Add(-cfg.Retention.Raw.D())); err != nil {
+		if n, err := collector.Prune(ctx, db, now.Add(-cfg.Retention.D())); err != nil {
 			log.Error("pruning metrics failed", "err", err)
 		} else if n > 0 {
 			log.Debug("pruned old metrics", "rows", n)

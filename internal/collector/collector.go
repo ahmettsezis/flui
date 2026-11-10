@@ -123,9 +123,6 @@ func (c *Collector) CollectOnce(ctx context.Context) error {
 	sem := make(chan struct{}, maxParallel)
 	var wg sync.WaitGroup
 	for i, n := range list {
-		if n.Mode != "agentless" {
-			continue
-		}
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

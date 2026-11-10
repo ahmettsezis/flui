@@ -148,7 +148,7 @@ func (s *server) nodeMetrics(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "range must be one of 15m, 1h, 6h, 24h, 2d, 7d")
 		return
 	}
-	if maxSpan := s.Config.Retention.Raw.D(); span > maxSpan {
+	if maxSpan := s.Config.Retention.D(); span > maxSpan {
 		span = maxSpan
 	}
 	to := time.Now()

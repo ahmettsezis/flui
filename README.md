@@ -3,31 +3,21 @@
 A minimal, secure web UI for monitoring one or more [Fluentd](https://www.fluentd.org/) instances.
 
 - **Buffers & throughput** – queue/stage size, available buffer space, retries, records/s per output plugin.
-- **System resources** – CPU, memory, disk and network of the Fluentd host (agent mode).
-- **Fluentd logs** – warnings and errors from Fluentd itself, searchable and live-tailed *(later release)*.
+- **Nothing to install on Fluentd hosts** – flui polls Fluentd's built-in `monitor_agent` (TCP 24220).
 - **Easy to run** – a single static binary with an embedded UI and SQLite. No external database, no Prometheus.
-- **Secure by default** – TLS everywhere, Argon2id passwords, optional TOTP 2FA, role-based access, audit log.
+- **Secure by default** – TLS everywhere, Argon2id passwords, role-based access, audit log.
 
 > **Status:** early development. Interfaces and commands may change before `v1.0`.
 
 ## How it works
 
-flui supports two collection modes. You can mix them in the same installation.
-
-| | Agentless | Agent |
-|---|---|---|
-| Install on Fluentd host | Nothing (config snippet only) | `flui-agent` (single binary) |
-| Buffers, retries, throughput | Yes | Yes |
-| Fluentd logs | Yes (Fluentd pushes them) | Yes (agent tails the log file) |
-| CPU / memory / disk / network | No | Yes |
-| Connection direction | flui → Fluentd `:24220` | agent → flui `:8443` (mTLS) |
-
 ```
- Browser ──HTTPS──▶ flui-server ──pull──▶ Fluentd monitor_agent :24220   (agentless)
-                         ▲   ▲
-                         │   └──HTTPS push── Fluentd logs (out_http)       (agentless)
-                         └──────mTLS push── flui-agent ── Fluentd          (agent)
+ Browser ──HTTPS──▶ flui-server ──pull──▶ Fluentd monitor_agent :24220
 ```
+
+flui pulls `/api/plugins.json` from every configured node every `collector.interval` (default 10 s) and
+stores buffer, retry and throughput metrics in SQLite. Nothing is installed on the Fluentd hosts; you only
+add a `monitor_agent` source block to the Fluentd config ([docs/setup.md](docs/setup.md)).
 
 ## Quick start
 
@@ -53,9 +43,8 @@ Then add your first Fluentd node from **Nodes → Add node**.
 
 | Topic | |
 |---|---|
-| [Installation](docs/installation.md) | Packages, Docker, Compose, Helm, first login |
-| [Agentless mode](docs/agentless.md) | Fluentd config snippets, firewall rules |
-| [Agent mode](docs/agent.md) | Installing and enrolling `flui-agent` |
+| [Installation](docs/installation.md) | Packages, Docker, Compose, first login |
+| [Connecting nodes](docs/setup.md) | `monitor_agent` snippet, firewall rules |
 | [Configuration](docs/configuration.md) | All settings and retention |
 | [Security](docs/security.md) | Security model and hardening |
 | [Architecture](docs/architecture.md) | Components and data flow |

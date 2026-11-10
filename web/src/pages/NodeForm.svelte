@@ -54,7 +54,7 @@
     <h1>{node ? `Edit ${node.name}` : 'Add node'}</h1>
   </div>
   <form class="card" onsubmit={submit}>
-    <p class="muted">Agentless: flui pulls metrics from Fluentd's <code>monitor_agent</code>. Nothing is installed on the host.</p>
+    <p class="muted">flui pulls metrics from Fluentd's <code>monitor_agent</code>. Nothing is installed on the host.</p>
     <label>
       Name
       <input bind:value={name} required maxlength="64" placeholder="fluentd-web-01" />

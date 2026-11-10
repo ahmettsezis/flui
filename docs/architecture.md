@@ -7,46 +7,32 @@ How flui works internally. You do not need this page to run flui.
 ```
 ┌──────────────────────────── flui-server ────────────────────────────┐
 │  web UI (Svelte, embedded)                                          │
-│  api       REST + Server-Sent Events, auth, RBAC                    │
-│  collector polls monitor_agent of agentless nodes                   │
-│  ingest    receives Fluentd logs (token) and agent data (mTLS)      │
-│  pki       internal CA, agent enrollment, certificate renewal       │
-│  store     SQLite (WAL): metrics, logs (FTS5), users, audit         │
-│  jobs      rollups and retention cleanup                            │
+│  api        REST, auth, RBAC                                        │
+│  collector  polls monitor_agent of every node                       │
+│  pki        internal CA, self-signed server certificate renewal     │
+│  store      SQLite (WAL): metrics, users, sessions, audit           │
+│  jobs       retention and session cleanup                           │
 └─────────────────────────────────────────────────────────────────────┘
-
-┌──────────── flui-agent ────────────┐
-│  monitor_agent client (localhost)  │
-│  sysmetrics  /proc, statfs         │──── mTLS push ───▶ flui-server
-│  logtail     rotation-aware tail   │
-│  queue       on-disk, size-limited │
-└────────────────────────────────────┘
 ```
 
-Both binaries are written in Go, built without CGO, and have no runtime dependencies.
+flui is a single Go binary, built without CGO, with no runtime dependencies.
 
 ## Data flow
 
-1. **Agentless metrics:** `collector` requests `/api/plugins.json` from each node (and each worker port) every
-   `collector.interval`, converts counters to rates and writes a sample to `metrics_raw`.
-2. **Agent metrics:** the agent collects the same data plus system metrics and sends batches to
-   `POST /api/v1/agent/push`. `ingest` validates and writes them to `metrics_raw`.
-3. **Logs:** Fluentd (`out_http`) or the agent posts log lines to the ingest endpoints; they are stored in `logs`
-   and indexed in `logs_fts`.
-4. **Live view:** new samples and log lines are published on an in-process bus and streamed to browsers via SSE.
-5. **Rollups:** `jobs` aggregates `metrics_raw` → `metrics_1m` → `metrics_1h` (min/max/avg/last) and deletes
-   data older than the configured [retention](configuration.md#retention).
+1. **Metrics:** `collector` requests `/api/plugins.json` from each node (and each worker port) every
+   `collector.interval`, converts counters to rates and writes a sample to `plugin_samples`.
+2. **Cleanup:** `jobs` deletes samples older than the configured [retention](configuration.md#retention)
+   and prunes expired sessions once an hour.
 
 ## Storage
 
 | Table | Content |
 |---|---|
-| `nodes`, `agents` | Monitored Fluentd instances, agent certificates |
-| `metrics_raw`, `metrics_1m`, `metrics_1h` | Time series, one row per node / plugin / metric / timestamp |
-| `logs`, `logs_fts` | Fluentd log lines and full-text index |
-| `users`, `sessions`, `api_tokens` | Authentication |
+| `nodes` | Monitored Fluentd instances |
+| `plugin_samples` | Time series, one row per node / worker / plugin / timestamp |
+| `users`, `sessions` | Authentication |
 | `audit_log` | Security-relevant events |
-| `settings` | Runtime settings (sensitive values encrypted) |
+| `settings` | Runtime settings |
 
 Schema changes are versioned migrations in `internal/store/migrations/`, applied on start.
 
@@ -57,21 +43,19 @@ nodes. High availability is out of scope for now.
 
 ```
 cmd/flui-server/      server entry point
-cmd/flui-agent/       agent entry point
 internal/
-  api/                HTTP handlers, middleware, SSE
-  audit/              audit log
-  auth/               passwords, sessions, TOTP, RBAC
+  api/                HTTP handlers, middleware
+  auth/               passwords, sessions, RBAC
   collector/          monitor_agent client and scheduler
   config/             configuration loading
-  ingest/             log and agent ingestion
-  logtail/            log file tailing (agent)
-  pki/                internal CA and enrollment
-  store/              SQLite access, migrations, rollups
-  sysmetrics/         /proc readers (agent)
+  nodes/              node registry and monitor_agent snippet
+  pki/                internal CA and server certificate
+  secret/             master key loading
+  server/             wiring, TLS, housekeeping jobs
+  store/              SQLite access, migrations
+  webui/              embedded built UI
 web/                  UI source (built into internal/webui)
-api/openapi.yaml      HTTP API specification
-deploy/               systemd, docker, compose, helm, Fluentd snippets
+deploy/               systemd, docker, compose, Fluentd snippets
 docs/                 documentation
 ```
 

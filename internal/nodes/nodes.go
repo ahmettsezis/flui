@@ -25,7 +25,6 @@ var (
 type Node struct {
 	ID         int64     `json:"id"`
 	Name       string    `json:"name"`
-	Mode       string    `json:"mode"`
 	MonitorURL string    `json:"monitor_url"`
 	Workers    int       `json:"workers"`
 	CreatedAt  time.Time `json:"created_at"`
@@ -102,7 +101,7 @@ func Snippet(n Node) string {
 	u, _ := url.Parse(n.MonitorURL)
 	bind := u.Hostname()
 	return fmt.Sprintf(`# flui: metrics for node %q
-# Allow TCP %s only from the flui server. See docs/agentless.md.
+# Allow TCP %s only from the flui server. See docs/setup.md.
 <source>
   @type monitor_agent
   bind %s
@@ -124,12 +123,12 @@ type Repo struct{ db *sql.DB }
 
 func NewRepo(db *sql.DB) *Repo { return &Repo{db: db} }
 
-const nodeCols = `id, name, mode, monitor_url, workers, created_at, updated_at`
+const nodeCols = `id, name, monitor_url, workers, created_at, updated_at`
 
 func scanNode(row interface{ Scan(...any) error }) (Node, error) {
 	var n Node
 	var created, updated int64
-	err := row.Scan(&n.ID, &n.Name, &n.Mode, &n.MonitorURL, &n.Workers, &created, &updated)
+	err := row.Scan(&n.ID, &n.Name, &n.MonitorURL, &n.Workers, &created, &updated)
 	n.CreatedAt, n.UpdatedAt = time.Unix(created, 0).UTC(), time.Unix(updated, 0).UTC()
 	return n, err
 }

@@ -1,18 +1,17 @@
-# Agentless mode
+# Connecting a Fluentd node
 
-Nothing is installed on the Fluentd host. You add two config blocks to Fluentd:
+Nothing is installed on the Fluentd host. Fluentd's built-in `monitor_agent` exposes buffer and retry
+stats; flui **pulls** them every 10 s over HTTP.
 
-1. **Metrics** – Fluentd's built-in `monitor_agent` exposes buffer and retry stats; flui **pulls** them every 10 s.
-2. **Logs** – Fluentd's built-in `out_http` **pushes** Fluentd's own logs to flui.
-
-CPU, memory, disk and network are **not** available in this mode. Use the [agent](agent.md) if you need them.
+CPU, memory, disk and network of the Fluentd host are **not** collected – `monitor_agent` does not
+report them.
 
 ## 1. Add the node in flui
 
 **Nodes → Add node**, enter a name and the monitor URL (for example `http://10.0.0.21:24220`).
 flui shows the `monitor_agent` snippet below after the node is created.
 
-## 2. Enable metrics (`monitor_agent`)
+## 2. Enable `monitor_agent`
 
 ```
 <source>
@@ -26,47 +25,6 @@ flui shows the `monitor_agent` snippet below after the node is created.
 **Multiple workers:** with `<system> workers N </system>`, each worker listens on `port + worker_id`
 (24220, 24221, …). Set **Workers = N** on the node in flui and all of them are collected.
 
-## 3. Ship Fluentd logs (`out_http`)
-
-> **Available in a later release.** This section documents how Fluentd's own logs will be shipped to flui;
-> the endpoint and the per-node token are not implemented yet.
-
-```
-<label @FLUENT_LOG>
-  <filter fluent.**>
-    @type record_transformer
-    <record>
-      tag ${tag}
-      time ${time}
-      host ${hostname}
-    </record>
-  </filter>
-  <match fluent.**>
-    @type http
-    endpoint https://flui.example.com:8443/api/v1/ingest/logs
-    headers {"Authorization":"Bearer <NODE_TOKEN>"}
-    json_array true
-    tls_ca_cert_path /etc/fluent/flui-ca.pem   # omit if flui uses a publicly trusted certificate
-    retryable_response_codes [429, 500, 502, 503, 504]
-    <format>
-      @type json
-    </format>
-    <buffer>
-      flush_interval 5s
-      chunk_limit_size 512k
-      total_limit_size 16m
-      overflow_action drop_oldest_chunk
-    </buffer>
-  </match>
-</label>
-```
-
-- Copy flui's CA certificate (`<data_dir>/tls/ca.pem` on the flui server, or **Settings → TLS → Download CA**)
-  to `/etc/fluent/flui-ca.pem`.
-- Keep the config file readable only by the Fluentd user, it contains the token:
-  `chmod 0640 /etc/fluent/fluentd.conf`.
-- If you already have a `<label @FLUENT_LOG>`, put both outputs inside one `<match>` with `@type copy`.
-
 Reload Fluentd (`sudo systemctl reload fluentd`). The node turns **Up** in flui within one collection interval.
 
 ## Network and firewall
@@ -74,7 +32,6 @@ Reload Fluentd (`sudo systemctl reload fluentd`). The node turns **Up** in flui 
 | From | To | Port | Purpose |
 |---|---|---|---|
 | flui server | Fluentd host | TCP 24220 (+ one per extra worker) | Metrics pull |
-| Fluentd host | flui server | TCP 8443 | Log push |
 
 `monitor_agent` has **no authentication and no TLS**. Allow port 24220 **only from the flui server's IP**, for example:
 
@@ -85,9 +42,6 @@ sudo firewall-cmd --reload
 # ufw
 sudo ufw allow from 10.0.0.10 to any port 24220 proto tcp
 ```
-
-If you cannot restrict the network, use the [agent](agent.md) instead – it reads `monitor_agent` on localhost
-and only makes outbound mTLS connections.
 
 ## What is collected
 
@@ -129,9 +83,7 @@ Check the last collection time when a node is down or stale.
 
 Metrics work without `@id`. Fluentd then reports generated IDs such as `object:698`, which can change on
 restart and cannot reliably identify a log route. With `include_config false`, flui cannot infer the match
-tag or OpenSearch index from these IDs. Keep this setting: exposing the config may expose credentials.
+tag or the destination index from these IDs. Keep this setting: exposing the config may expose credentials.
 
 For stable names and continuous history, give each output a unique `@id`, for example `@id out_access`
 inside its `<match>` block. Existing history under a generated ID remains under that old ID.
-A manual alias for a generated ID would require remapping after ID changes; aliases and config import
-are not currently implemented.
