@@ -1,9 +1,9 @@
 <script>
   import { api, bytes, rate, num } from '../lib/api.svelte.js';
-  let nodes = $state(null), error = $state('');
+  let nodes = $state(null), error = $state(''), lastRefresh = $state(null);
 
   async function load() {
-    try { nodes = await api('/api/v1/nodes'); error = ''; }
+    try { nodes = await api('/api/v1/nodes'); error = ''; lastRefresh = new Date(); }
     catch (e) { if (e.status !== 401) error = e.message; }
   }
 
@@ -18,7 +18,11 @@
 
 <div class="head">
   <h1>Nodes</h1>
-  <a class="btn" href="#/nodes/new">+ Add node</a>
+  <div class="row">
+    {#if lastRefresh}<span class="muted">Updated {lastRefresh.toLocaleTimeString()}</span>{/if}
+    <button class="secondary" onclick={load}>Refresh</button>
+    <a class="btn" href="#/nodes/new">+ Add node</a>
+  </div>
 </div>
 
 {#if error}<p class="error">{error}</p>{/if}
@@ -60,6 +64,8 @@
 
 <style>
   .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .row { display: flex; gap: 0.6rem; align-items: center; }
+  .muted { color: var(--muted); font-size: 0.85rem; }
   h1 { margin: 0; font-size: 1.3rem; }
   .empty { text-align: center; padding: 2.5rem; }
   .empty h2 { margin-top: 0; font-size: 1.1rem; }

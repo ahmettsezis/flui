@@ -5,7 +5,7 @@
   import { aggregatePlugins, pluginRows, filterAndSortPlugins, pluginKey } from '../lib/metrics.js';
 
   let { id } = $props();
-  let node = $state(null), metrics = $state(null), range = $state('1h'), error = $state('');
+  let node = $state(null), metrics = $state(null), range = $state('1h'), error = $state(''), lastRefresh = $state(null);
   let editing = $state(false), deleting = $state(false);
   let query = $state(''), filter = $state('all'), sort = $state('attention'), descending = $state(false);
   let selectedKey = $state(null);
@@ -16,7 +16,7 @@
     try {
       const [n, m] = await Promise.all([api(`/api/v1/nodes/${nodeID}`), api(`/api/v1/nodes/${nodeID}/metrics?range=${selectedRange}`)]);
       if (signal.aborted) return;
-      node = n; metrics = m; error = '';
+      node = n; metrics = m; error = ''; lastRefresh = new Date();
     } catch (e) { if (!signal.aborted && e.status !== 401) error = e.message; }
   }
 
@@ -67,12 +67,14 @@
       <p class="muted mono">{node.monitor_url}</p>
       {#if lastError}<p class="error">Last error: {lastError}</p>{/if}
     </div>
-    {#if canEdit}
-      <div class="row">
+    <div class="row">
+      {#if lastRefresh}<span class="muted">Updated {lastRefresh.toLocaleTimeString()}</span>{/if}
+      <button class="secondary" onclick={() => load(id, range, { aborted: false })}>Refresh</button>
+      {#if canEdit}
         <button class="secondary" onclick={() => editing = true}>Edit</button>
         <button class="danger" onclick={remove}>{deleting ? 'Confirm delete' : 'Delete'}</button>
-      </div>
-    {/if}
+      {/if}
+    </div>
   </div>
 
   <div class="cards">
