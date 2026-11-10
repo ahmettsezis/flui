@@ -6,7 +6,7 @@
 
   let { id } = $props();
   let node = $state(null), metrics = $state(null), range = $state('1h'), error = $state('');
-  let editing = $state(false), showSnippet = $state(false), deleting = $state(false);
+  let editing = $state(false), deleting = $state(false);
   let query = $state(''), filter = $state('all'), sort = $state('attention'), descending = $state(false);
   let selectedKey = $state(null);
   const ranges = [['15m', '15m'], ['1h', '1h'], ['6h', '6h'], ['24h', '24h'], ['2d', '2d'], ['7d', '7d']];
@@ -69,16 +69,11 @@
     </div>
     {#if canEdit}
       <div class="row">
-        <button class="secondary" onclick={() => showSnippet = !showSnippet}>Fluentd config</button>
         <button class="secondary" onclick={() => editing = true}>Edit</button>
         <button class="danger" onclick={remove}>{deleting ? 'Confirm delete' : 'Delete'}</button>
       </div>
     {/if}
   </div>
-
-  {#if showSnippet}
-    <pre class="snippet">{node.snippet}</pre>
-  {/if}
 
   <div class="cards">
     <div class="stat"><small>Buffered</small><strong>{bytes(node.status.summary?.buffer_bytes)}</strong></div>
@@ -228,6 +223,5 @@
   .type { color: var(--muted); font-weight: 400; }
   .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
   @media (max-width: 700px) { .grid { grid-template-columns: minmax(0, 1fr); } }
-  .snippet { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 1rem; overflow-x: auto; font-size: 0.8rem; margin-bottom: 1rem; }
   .empty { padding: 2rem; text-align: center; }
 </style>
