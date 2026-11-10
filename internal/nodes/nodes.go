@@ -26,7 +26,6 @@ type Node struct {
 	ID         int64     `json:"id"`
 	Name       string    `json:"name"`
 	MonitorURL string    `json:"monitor_url"`
-	Workers    int       `json:"workers"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
 }
@@ -34,7 +33,6 @@ type Node struct {
 type Input struct {
 	Name       string `json:"name"`
 	MonitorURL string `json:"monitor_url"`
-	Workers    int    `json:"workers"`
 }
 
 // ValidationError is returned for invalid user input; its message is safe to show.
@@ -47,12 +45,6 @@ func (in *Input) Normalize() error {
 	in.Name = strings.TrimSpace(in.Name)
 	if !namePattern.MatchString(in.Name) {
 		return &ValidationError{"name", "use 1-64 letters, digits, spaces, '.', '_' or '-'"}
-	}
-	if in.Workers == 0 {
-		in.Workers = 1
-	}
-	if in.Workers < 1 || in.Workers > 64 {
-		return &ValidationError{"workers", "must be between 1 and 64"}
 	}
 	u, err := NormalizeMonitorURL(in.MonitorURL)
 	if err != nil {
@@ -82,20 +74,6 @@ func NormalizeMonitorURL(raw string) (string, error) {
 	return u.Scheme + "://" + net.JoinHostPort(u.Hostname(), strconv.Itoa(port)), nil
 }
 
-// WorkerURL returns the monitor_agent URL of a worker: Fluentd listens on port + worker_id in multi-worker mode.
-func WorkerURL(base string, worker int) (string, error) {
-	u, err := url.Parse(base)
-	if err != nil {
-		return "", err
-	}
-	port, err := strconv.Atoi(u.Port())
-	if err != nil {
-		return "", fmt.Errorf("invalid monitor URL %q", base)
-	}
-	u.Host = net.JoinHostPort(u.Hostname(), strconv.Itoa(port+worker))
-	return u.String(), nil
-}
-
 // Snippet returns the Fluentd configuration that exposes metrics for this node.
 func Snippet(n Node) string {
 	u, _ := url.Parse(n.MonitorURL)
@@ -108,27 +86,19 @@ func Snippet(n Node) string {
   port %s
   include_config false
 </source>
-`, n.Name, portRange(u.Port(), n.Workers), bind, u.Port())
-}
-
-func portRange(port string, workers int) string {
-	if workers <= 1 {
-		return port
-	}
-	p, _ := strconv.Atoi(port)
-	return fmt.Sprintf("%d-%d", p, p+workers-1)
+`, n.Name, u.Port(), bind, u.Port())
 }
 
 type Repo struct{ db *sql.DB }
 
 func NewRepo(db *sql.DB) *Repo { return &Repo{db: db} }
 
-const nodeCols = `id, name, monitor_url, workers, created_at, updated_at`
+const nodeCols = `id, name, monitor_url, created_at, updated_at`
 
 func scanNode(row interface{ Scan(...any) error }) (Node, error) {
 	var n Node
 	var created, updated int64
-	err := row.Scan(&n.ID, &n.Name, &n.MonitorURL, &n.Workers, &created, &updated)
+	err := row.Scan(&n.ID, &n.Name, &n.MonitorURL, &created, &updated)
 	n.CreatedAt, n.UpdatedAt = time.Unix(created, 0).UTC(), time.Unix(updated, 0).UTC()
 	return n, err
 }
@@ -163,8 +133,8 @@ func (r *Repo) Create(ctx context.Context, in Input) (Node, error) {
 		return Node{}, err
 	}
 	now := time.Now().Unix()
-	n, err := scanNode(r.db.QueryRowContext(ctx, `INSERT INTO nodes (name, monitor_url, workers, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?) RETURNING `+nodeCols, in.Name, in.MonitorURL, in.Workers, now, now))
+	n, err := scanNode(r.db.QueryRowContext(ctx, `INSERT INTO nodes (name, monitor_url, created_at, updated_at)
+		VALUES (?, ?, ?, ?) RETURNING `+nodeCols, in.Name, in.MonitorURL, now, now))
 	return n, mapErr(err)
 }
 
@@ -172,8 +142,8 @@ func (r *Repo) Update(ctx context.Context, id int64, in Input) (Node, error) {
 	if err := in.Normalize(); err != nil {
 		return Node{}, err
 	}
-	n, err := scanNode(r.db.QueryRowContext(ctx, `UPDATE nodes SET name = ?, monitor_url = ?, workers = ?, updated_at = ?
-		WHERE id = ? RETURNING `+nodeCols, in.Name, in.MonitorURL, in.Workers, time.Now().Unix(), id))
+	n, err := scanNode(r.db.QueryRowContext(ctx, `UPDATE nodes SET name = ?, monitor_url = ?, updated_at = ?
+		WHERE id = ? RETURNING `+nodeCols, in.Name, in.MonitorURL, time.Now().Unix(), id))
 	return n, mapErr(err)
 }
 

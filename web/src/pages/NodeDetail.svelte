@@ -34,18 +34,18 @@
   }
 
   function setSort(field) {
-    descending = sort === field ? !descending : !['plugin_id', 'type', 'worker', 'buffer_available_ratio'].includes(field);
+    descending = sort === field ? !descending : !['plugin_id', 'type', 'buffer_available_ratio'].includes(field);
     sort = field;
   }
 
-  const workerPlugins = $derived((metrics?.plugins ?? []).filter(p => p.ts.length));
-  const totals = $derived(aggregatePlugins(workerPlugins));
-  const rows = $derived(pluginRows(workerPlugins));
+  const allPlugins = $derived((metrics?.plugins ?? []).filter(p => p.ts.length));
+  const totals = $derived(aggregatePlugins(allPlugins));
+  const rows = $derived(pluginRows(allPlugins));
   const visibleRows = $derived(filterAndSortPlugins(rows, query, filter, sort, descending));
-  const selected = $derived(workerPlugins.find(p => pluginKey(p) === selectedKey));
-  const hasAnonymous = $derived(workerPlugins.some(p => p.plugin_id.startsWith('object:')));
+  const selected = $derived(allPlugins.find(p => pluginKey(p) === selectedKey));
+  const hasAnonymous = $derived(allPlugins.some(p => p.plugin_id.startsWith('object:')));
   const columns = [
-    ['plugin_id', 'Plugin'], ['worker', 'Worker'], ['type', 'Type'],
+    ['plugin_id', 'Plugin'], ['type', 'Type'],
     ['buffer_total_queued_size', 'Buffered'], ['buffer_queue_length', 'Queue'],
     ['retry_count', 'Retry counter'], ['emit_records_rate', 'Records/s'], ['buffer_available_ratio', 'Free buffer'],
   ];
@@ -64,7 +64,7 @@
   <div class="head">
     <div>
       <h1>{node.name} <span class="dot {node.status.state}"></span><small>{stateLabel[node.status.state]}</small></h1>
-      <p class="muted mono">{node.monitor_url} · workers: {node.workers}</p>
+      <p class="muted mono">{node.monitor_url}</p>
       {#if lastError}<p class="error">Last error: {lastError}</p>{/if}
     </div>
     {#if canEdit}
@@ -98,10 +98,10 @@
     {/each}
   </div>
 
-  {#if workerPlugins.length}
+  {#if allPlugins.length}
     <div class="card">
       <h2>All outputs</h2>
-      <p class="muted help">Totals across reported output plugins and workers. Free buffer is the lowest reported percentage, not disk space.
+      <p class="muted help">Totals across reported output plugins. Free buffer is the lowest reported percentage, not disk space.
         Missing values are excluded; gaps are not zero. Buffer values use each time bucket's peak.</p>
       <div class="grid">
         <Chart title="Total buffered (bytes)" ts={totals.ts} series={[{ label: 'bytes', data: totals.buffer_total_queued_size, stroke: palette[0] }]} />
@@ -117,7 +117,7 @@
           cannot be inferred from it. A unique <code>@id</code> in each output gives it a readable, stable name. Keep <code>include_config false</code>.</p>
       {/if}
       <div class="filters">
-        <label>Search plugins<input type="search" placeholder="Plugin ID, type or worker" bind:value={query} /></label>
+        <label>Search plugins<input type="search" placeholder="Plugin ID or type" bind:value={query} /></label>
         <label>Show<select bind:value={filter}>
           <option value="all">All plugins</option>
           <option value="active">Active or needs attention</option>
@@ -144,7 +144,7 @@
                 <td class:warn={p.attention && !p.historical}>{p.state}</td>
                 <td class="plugin-name"><button class="link" aria-expanded={selectedKey === p.key}
                   onclick={() => selectedKey = selectedKey === p.key ? null : p.key}>{p.plugin_id}</button></td>
-                <td class="numeric">{p.worker + 1}</td><td>{p.type}</td>
+                <td>{p.type}</td>
                 <td class="numeric">{bytes(p.buffer_total_queued_size)}</td>
                 <td class="numeric">{num(p.buffer_queue_length)}</td>
                 <td class="numeric">{num(p.retry_count)}</td>
@@ -162,7 +162,7 @@
       {@const p = selected}
       <div class="card plugin">
         <div class="head">
-          <h2>Worker {p.worker + 1} · <span class="mono">{p.plugin_id}</span> <span class="type">{p.type}</span></h2>
+          <h2><span class="mono">{p.plugin_id}</span> <span class="type">{p.type}</span></h2>
           <button class="secondary" onclick={() => selectedKey = null}>Close detail</button>
         </div>
         <p class="muted help">Last bucket: {new Date(p.ts.at(-1) * 1000).toLocaleString()}</p>

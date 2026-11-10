@@ -105,23 +105,22 @@ func (s *server) deleteNode(w http.ResponseWriter, r *http.Request) {
 func (s *server) testNode(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		MonitorURL string `json:"monitor_url"`
-		Workers    int    `json:"workers"`
 	}
 	if !decodeJSON(w, r, &in) {
 		return
 	}
-	probe := nodes.Input{Name: "test", MonitorURL: in.MonitorURL, Workers: in.Workers}
+	probe := nodes.Input{Name: "test", MonitorURL: in.MonitorURL}
 	if s.nodeErr(w, r, probe.Normalize()) {
 		return
 	}
-	ctx, cancel := context.WithTimeout(r.Context(), time.Duration(probe.Workers)*s.Config.Collector.Timeout.D())
+	ctx, cancel := context.WithTimeout(r.Context(), s.Config.Collector.Timeout.D())
 	defer cancel()
-	counts, err := s.Collector.Test(ctx, probe.MonitorURL, probe.Workers)
+	count, err := s.Collector.Test(ctx, probe.MonitorURL)
 	if err != nil {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": err.Error(), "monitor_url": probe.MonitorURL})
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "output_plugins": counts, "monitor_url": probe.MonitorURL})
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "output_plugins": count, "monitor_url": probe.MonitorURL})
 }
 
 // rangeOptions are the selectable chart ranges.
@@ -183,6 +182,6 @@ func (s *server) audit(r *http.Request, action string, n nodes.Node) {
 	u := userFrom(r)
 	s.Auth.Audit(r.Context(), auth.AuditEntry{
 		UserID: u.ID, Username: u.Username, Action: action, Target: n.Name, IP: s.clientIP(r),
-		Details: map[string]any{"id": n.ID, "monitor_url": n.MonitorURL, "workers": n.Workers},
+		Details: map[string]any{"id": n.ID, "monitor_url": n.MonitorURL},
 	})
 }

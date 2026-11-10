@@ -148,7 +148,7 @@ func TestAuthAndNodeFlow(t *testing.T) {
 	expect(t, "password change", admin.do("POST", "/api/v1/auth/password", newPW), 204)
 
 	expect(t, "invalid node", admin.do("POST", "/api/v1/nodes", `{"name":"web 1","monitor_url":"ftp://x"}`), 400)
-	r = admin.do("POST", "/api/v1/nodes", `{"name":"web-1","monitor_url":"127.0.0.1:1","workers":1}`)
+	r = admin.do("POST", "/api/v1/nodes", `{"name":"web-1","monitor_url":"127.0.0.1:1"}`)
 	expect(t, "create node", r, 201)
 	id := int(r.body["id"].(float64))
 	if !strings.Contains(r.body["snippet"].(string), "monitor_agent") {
@@ -173,7 +173,7 @@ func TestAuthAndNodeFlow(t *testing.T) {
 	expect(t, "get node", admin.do("GET", path, ""), 200)
 	expect(t, "metrics", admin.do("GET", path+"/metrics?range=6h", ""), 200)
 	expect(t, "metrics bad range", admin.do("GET", path+"/metrics?range=1y", ""), 400)
-	expect(t, "update node", admin.do("PUT", path, `{"name":"web-01","monitor_url":"127.0.0.1:3","workers":2}`), 200)
+	expect(t, "update node", admin.do("PUT", path, `{"name":"web-01","monitor_url":"127.0.0.1:3"}`), 200)
 	expect(t, "missing node", admin.do("GET", "/api/v1/nodes/999", ""), 404)
 
 	hash, _ := auth.HashPassword("viewer-password-123")

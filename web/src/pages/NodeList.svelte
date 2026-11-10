@@ -35,7 +35,7 @@
     <table>
       <thead>
         <tr>
-          <th>Name</th><th>Status</th><th>Monitor URL</th><th>Workers</th><th>Plugins</th>
+          <th>Name</th><th>Status</th><th>Monitor URL</th><th>Plugins</th>
           <th class="num">Buffered</th><th class="num">Queue</th><th class="num">Retries</th><th class="num">Free space</th><th class="num">Records/s</th>
         </tr>
       </thead>
@@ -45,7 +45,6 @@
             <td class="name">{n.name}</td>
             <td><span class="dot {n.status.state}"></span>{stateLabel[n.status.state] ?? n.status.state}</td>
             <td class="mono">{n.monitor_url}</td>
-            <td class="num">{n.workers}</td>
             <td class="num">{n.status.summary?.plugins ?? '–'}</td>
             <td class="num">{bytes(n.status.summary?.buffer_bytes)}</td>
             <td class="num">{num(n.status.summary?.queue_length)}</td>
