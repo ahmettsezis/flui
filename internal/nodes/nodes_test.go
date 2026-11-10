@@ -56,7 +56,7 @@ func TestRepoCRUD(t *testing.T) {
 	r := NewRepo(st.DB)
 
 	n, err := r.Create(ctx, Input{Name: "web-1", MonitorURL: "10.0.0.21"})
-	if err != nil || n.ID == 0 || n.Workers != 1 || n.MonitorURL != "http://10.0.0.21:24220" || n.Mode != "agentless" {
+	if err != nil || n.ID == 0 || n.Workers != 1 || n.MonitorURL != "http://10.0.0.21:24220" {
 		t.Fatalf("create: %+v %v", n, err)
 	}
 	if _, err := r.Create(ctx, Input{Name: "WEB-1", MonitorURL: "10.0.0.22"}); !errors.Is(err, ErrDuplicate) {

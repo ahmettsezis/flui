@@ -13,7 +13,7 @@ Report privately via GitHub: **Security → Report a vulnerability** on
 
 Please include:
 
-- affected version and component (`flui-server`, `flui-agent`, UI),
+- affected version and component (`flui-server`, UI),
 - steps to reproduce or a proof of concept,
 - impact as you understand it.
 

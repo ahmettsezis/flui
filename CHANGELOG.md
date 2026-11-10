@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Breaking:** flui is now agentless-only. The `nodes.mode` column is dropped, the unused `ingest.*`
+  settings and `auth.require_totp_for_admins` are removed, and `retention` is now a single duration
+  (`retention: 30d`) instead of a `raw`/`minute`/`hour`/`logs` map.
 - Node details now show aggregate charts and a searchable, sortable output table with activity filters.
   Plugin charts open on selection instead of rendering every plugin at once.
 - Explain generated Fluentd IDs, missing metrics, buffer percentages and retry counters in the dashboard.

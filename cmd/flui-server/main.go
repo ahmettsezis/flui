@@ -188,7 +188,7 @@ func cmdTLS(args []string, stdout io.Writer) error {
 	}
 	for _, c := range []struct{ label, path string }{
 		{"Server certificate", serverCert},
-		{"Internal CA (agents)", filepath.Join(server.TLSDir(cfg), pki.CACertFile)},
+		{"Internal CA", filepath.Join(server.TLSDir(cfg), pki.CACertFile)},
 	} {
 		fp, err := pki.FileFingerprint(c.path)
 		if err != nil {

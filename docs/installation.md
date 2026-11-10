@@ -1,9 +1,7 @@
 # Installation
 
-flui has two binaries:
-
-- **`flui-server`** – the web UI, API and storage. Install it once.
-- **`flui-agent`** – optional, one per Fluentd host. See [agent.md](agent.md).
+flui is a single binary: **`flui-server`** – the web UI, API and storage. Install it once;
+nothing is installed on the Fluentd hosts ([setup](setup.md)).
 
 ## Requirements
 
@@ -14,7 +12,7 @@ flui has two binaries:
 | Disk | ~1 GB per 50 nodes per year of metrics; logs depend on volume |
 | Fluentd | v1.14+ (`fluent-package` / `td-agent` 4+) |
 
-Ports: flui listens on **TCP 8443** (HTTPS). For network rules, see [agentless.md](agentless.md#network-and-firewall).
+Ports: flui listens on **TCP 8443** (HTTPS). For network rules, see [setup](setup.md#network-and-firewall).
 
 ## Option 1 – Linux package (recommended for VMs)
 
@@ -96,7 +94,7 @@ docker logs flui 2>&1 | grep "initial admin password"  # Docker
 1. Open `https://<host>:8443`. With the default self-signed certificate your browser will warn once;
    compare the fingerprint with `flui-server tls fingerprint`, or [use your own certificate](configuration.md#tls).
 2. Sign in as `admin`. You must set a new password; the initial password file is deleted.
-3. Add Fluentd nodes: [agentless](agentless.md) or [agent](agent.md).
+3. Add Fluentd nodes: [Connecting a Fluentd node](setup.md).
 
 ## Upgrade
 

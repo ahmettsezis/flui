@@ -45,15 +45,12 @@ server:
   listen: "127.0.0.1:9443"
   public_url: "https://flui.example.com:9443"
 data_dir: /srv/flui
-retention:
-  raw: 1d
-  logs: 14d
+retention: 1d
 `)
 	cfg, err := Load(p, true, []string{
 		"FLUI_SERVER_LISTEN=:10443",
-		"FLUI_AUTH_REQUIRE_TOTP_FOR_ADMINS=true",
 		"FLUI_SERVER_TRUSTED_PROXIES=10.0.0.0/8, 192.168.0.0/16",
-		"FLUI_RETENTION_HOUR=90d",
+		"FLUI_RETENTION=90d",
 		"OTHER_VAR=ignored",
 	})
 	if err != nil {
@@ -67,12 +64,8 @@ retention:
 		{"public_url (file)", cfg.Server.PublicURL, "https://flui.example.com:9443"},
 		{"data_dir", cfg.DataDir, "/srv/flui"},
 		{"master key follows data_dir", cfg.MasterKeyFile, "/srv/flui/master.key"},
-		{"totp", cfg.Auth.RequireTOTPForAdmins, true},
 		{"proxies", strings.Join(cfg.Server.TrustedProxies, ","), "10.0.0.0/8,192.168.0.0/16"},
-		{"raw", cfg.Retention.Raw.D(), 24 * time.Hour},
-		{"logs", cfg.Retention.Logs.D(), 14 * Day},
-		{"hour (env)", cfg.Retention.Hour.D(), 90 * Day},
-		{"minute (default)", cfg.Retention.Minute.D(), 30 * Day},
+		{"retention (env wins)", cfg.Retention.D(), 90 * Day},
 	}
 	for _, c := range checks {
 		if c.got != c.want {
@@ -88,11 +81,11 @@ func TestInvalidConfigs(t *testing.T) {
 		want string
 	}{
 		"unknown field":        {yaml: "server:\n  lisen: ':1'\n", want: "lisen"},
-		"retention over 1y":    {yaml: "retention:\n  hour: 400d\n", want: "retention.hour"},
+		"retention over 1y":    {yaml: "retention: 400d\n", want: "retention"},
 		"cert without key":     {yaml: "server:\n  tls:\n    cert_file: /x.crt\n", want: "cert_file and key_file"},
 		"http public url":      {yaml: "server:\n  public_url: http://x\n", want: "public_url"},
 		"bad duration":         {yaml: "collector:\n  interval: 10x\n", want: "invalid duration"},
-		"bad env bool":         {env: []string{"FLUI_AUTH_REQUIRE_TOTP_FOR_ADMINS=maybe"}, want: "invalid boolean"},
+		"bad env int":          {env: []string{"FLUI_AUTH_LOCKOUT_THRESHOLD=abc"}, want: "invalid integer"},
 		"bad proxy":            {env: []string{"FLUI_SERVER_TRUSTED_PROXIES=10.0.0.1"}, want: "not a CIDR"},
 		"timeout >= interval":  {yaml: "collector:\n  interval: 5s\n  timeout: 5s\n", want: "collector.timeout"},
 		"idle exceeds max":     {yaml: "auth:\n  session_idle_timeout: 13h\n", want: "session_idle_timeout"},

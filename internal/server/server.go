@@ -158,8 +158,8 @@ func Run(ctx context.Context, cfg config.Config, log *slog.Logger, ln net.Listen
 	return nil
 }
 
-// setupTLS returns the certificate source for the HTTPS listener. The internal CA is always created because agents
-// use it for mTLS; it also signs the server certificate when no certificate is configured.
+// setupTLS returns the certificate source for the HTTPS listener. The internal CA signs the server
+// certificate when no certificate is configured.
 func setupTLS(ctx context.Context, cfg config.Config, kr *secret.Keyring, log *slog.Logger) (*pki.Reloader, error) {
 	onErr := func(err error) { log.Error("reloading TLS certificate failed; keeping the previous one", "err", err) }
 	ca, err := pki.LoadOrCreateCA(TLSDir(cfg), kr)
