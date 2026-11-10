@@ -17,7 +17,7 @@ func TestCommands(t *testing.T) {
 		{[]string{"help"}, 0, "Usage:", ""},
 		{[]string{"nope"}, 2, "", "unknown command"},
 		{[]string{"tls"}, 2, "", "tls fingerprint"},
-		{[]string{"backup", "--config", "/does/not/exist.yaml", "x.db"}, 1, "", "invalid configuration"},
+		{[]string{"backup"}, 2, "", "unknown command"},
 		{[]string{"serve", "--bogus"}, 2, "", "flag provided but not defined"},
 	}
 	for _, c := range cases {

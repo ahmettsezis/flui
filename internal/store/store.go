@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"embed"
-	"errors"
 	"fmt"
 	"io/fs"
 	"net/url"
@@ -95,19 +94,6 @@ func (s *Store) apply(ctx context.Context, m migration) error {
 		return err
 	}
 	return tx.Commit()
-}
-
-// Backup writes a consistent snapshot of the database to dst, which must not exist.
-func (s *Store) Backup(ctx context.Context, dst string) error {
-	if _, err := os.Stat(dst); err == nil {
-		return fmt.Errorf("store: %s already exists", dst)
-	} else if !errors.Is(err, fs.ErrNotExist) {
-		return err
-	}
-	if _, err := s.DB.ExecContext(ctx, `VACUUM INTO ?`, dst); err != nil {
-		return err
-	}
-	return os.Chmod(dst, 0o600)
 }
 
 type migration struct {

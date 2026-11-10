@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-const DefaultMonitorPort = 24220
+const defaultMonitorPort = 24220
 
 var (
 	ErrNotFound  = errors.New("node not found")
@@ -65,7 +65,7 @@ func NormalizeMonitorURL(raw string) (string, error) {
 		u.RawQuery != "" || u.Fragment != "" || (u.Path != "" && u.Path != "/") {
 		return "", bad
 	}
-	port := DefaultMonitorPort
+	port := defaultMonitorPort
 	if p := u.Port(); p != "" {
 		if port, err = strconv.Atoi(p); err != nil || port < 1 || port > 65535 {
 			return "", bad

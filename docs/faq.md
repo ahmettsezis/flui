@@ -37,10 +37,6 @@ sudo -u flui flui-server user reset-password admin
 
 Lower `retention` ([configuration](configuration.md#retention)).
 
-## How do I back up flui?
-
-See [Backup and restore](installation.md#backup-and-restore).
-
 ## Does flui support Prometheus, Kubernetes discovery, alerts, SSO?
 
 Not yet. Alerts and SSO (OIDC/LDAP) are on the roadmap. Prometheus is intentionally not required.

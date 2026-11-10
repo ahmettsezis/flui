@@ -29,8 +29,6 @@ type env struct {
 	adminPW string
 }
 
-func itoa(i int) string { return strconv.Itoa(i) }
-
 func newEnv(t *testing.T) *env {
 	t.Helper()
 	ctx := context.Background()
@@ -169,7 +167,7 @@ func TestAuthAndNodeFlow(t *testing.T) {
 	if !strings.Contains(r.raw, `"name":"web-1"`) || !strings.Contains(r.raw, `"status":{"state"`) {
 		t.Errorf("list = %s", r.raw)
 	}
-	path := "/api/v1/nodes/" + itoa(id)
+	path := "/api/v1/nodes/" + strconv.Itoa(id)
 	expect(t, "get node", admin.do("GET", path, ""), 200)
 	expect(t, "metrics", admin.do("GET", path+"/metrics?range=6h", ""), 200)
 	expect(t, "metrics bad range", admin.do("GET", path+"/metrics?range=1y", ""), 400)
@@ -210,7 +208,7 @@ func TestLoginRateLimit(t *testing.T) {
 	e := newEnv(t)
 	c := &client{e: e}
 	for i := range 10 {
-		expect(t, "attempt "+itoa(i), c.login("nobody", "x"), 401)
+		expect(t, "attempt "+strconv.Itoa(i), c.login("nobody", "x"), 401)
 	}
 	r := c.login("nobody", "x")
 	expect(t, "rate limited", r, 429)

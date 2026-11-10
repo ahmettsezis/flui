@@ -24,16 +24,16 @@ add a `monitor_agent` source block to the Fluentd config ([docs/setup.md](docs/s
 ### Docker
 
 ```sh
-docker run -d --name flui -p 8443:8443 -v flui-data:/data ghcr.io/ahmettsezis/flui:latest
+git clone https://github.com/ahmettsezis/flui.git && cd flui
+docker build -f deploy/docker/Dockerfile -t flui .
+docker run -d --name flui -p 8443:8443 -v flui-data:/data flui
 docker logs flui 2>&1 | grep "initial admin password"
 ```
 
 ### Linux VM (systemd)
 
 ```sh
-sudo dpkg -i flui-server_<version>_linux_amd64.deb   # or: sudo rpm -i flui-server-<version>.x86_64.rpm
-sudo systemctl enable --now flui-server
-sudo cat /var/lib/flui/initial-admin-password
+make build   # produces bin/flui-server, then follow docs/installation.md
 ```
 
 Open `https://<host>:8443`, sign in as `admin` and change the password.
@@ -43,7 +43,7 @@ Then add your first Fluentd node from **Nodes → Add node**.
 
 | Topic | |
 |---|---|
-| [Installation](docs/installation.md) | Packages, Docker, Compose, first login |
+| [Installation](docs/installation.md) | Build from source, Docker, systemd, first login |
 | [Connecting nodes](docs/setup.md) | `monitor_agent` snippet, firewall rules |
 | [Configuration](docs/configuration.md) | All settings and retention |
 | [Security](docs/security.md) | Security model and hardening |

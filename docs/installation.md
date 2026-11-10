@@ -3,37 +3,40 @@
 flui is a single binary: **`flui-server`** – the web UI, API and storage. Install it once;
 nothing is installed on the Fluentd hosts ([setup](setup.md)).
 
+There are no prebuilt packages or images yet; flui is built from source.
+
 ## Requirements
 
 | | Minimum |
 |---|---|
-| OS | Linux (amd64 or arm64). Docker and Kubernetes are also supported. |
+| OS | Linux (amd64 or arm64), or any host with Docker |
 | CPU / RAM | 1 vCPU, 256 MB RAM for ~50 Fluentd nodes |
-| Disk | ~1 GB per 50 nodes per year of metrics; logs depend on volume |
+| Disk | ~1 GB per 50 nodes per year of metrics |
 | Fluentd | v1.14+ (`fluent-package` / `td-agent` 4+) |
+| Build | Go 1.26+ and Node.js ≥ 20.19 (not needed for the Docker build) |
 
 Ports: flui listens on **TCP 8443** (HTTPS). For network rules, see [setup](setup.md#network-and-firewall).
 
-## Option 1 – Linux package (recommended for VMs)
-
-Download the package for your platform from the [releases page](https://github.com/ahmettsezis/flui/releases) and verify it:
+## Option 1 – Build and install on a Linux VM
 
 ```sh
-sha256sum --ignore-missing -c checksums.txt
+git clone https://github.com/ahmettsezis/flui.git
+cd flui
+make build            # builds the UI into internal/webui/dist, then bin/flui-server
 ```
 
-Install and start:
+Install with the bundled systemd unit:
 
 ```sh
-# Debian / Ubuntu
-sudo dpkg -i flui-server_<version>_linux_amd64.deb
-# RHEL / Rocky / Alma
-sudo rpm -i flui-server-<version>.x86_64.rpm
-
-sudo systemctl enable --now flui-server
+sudo install -m 0755 bin/flui-server /usr/bin/flui-server
+sudo useradd --system --home /var/lib/flui --shell /usr/sbin/nologin flui
+sudo install -d -o flui -g flui -m 0700 /var/lib/flui
+sudo install -D -m 0644 deploy/flui.yaml /etc/flui/flui.yaml
+sudo install -m 0644 deploy/systemd/flui-server.service /etc/systemd/system/
+sudo systemctl daemon-reload && sudo systemctl enable --now flui-server
 ```
 
-The package installs:
+This installs:
 
 | Path | Purpose |
 |---|---|
@@ -42,44 +45,26 @@ The package installs:
 | `/var/lib/flui/` | Data: database, TLS files, master key |
 | `flui-server.service` | Hardened systemd unit, runs as user `flui` |
 
-## Option 2 – Tarball
+## Option 2 – Docker
 
 ```sh
-tar -xzf flui-server_<version>_linux_amd64.tar.gz
-sudo install -m 0755 flui-server /usr/local/bin/
-sudo useradd --system --home /var/lib/flui --shell /usr/sbin/nologin flui
-sudo install -d -o flui -g flui -m 0700 /var/lib/flui
-sudo install -D -m 0644 flui.yaml /etc/flui/flui.yaml
-sudo install -m 0644 flui-server.service /etc/systemd/system/
-sudo systemctl daemon-reload && sudo systemctl enable --now flui-server
-```
-
-## Option 3 – Docker
-
-```sh
+git clone https://github.com/ahmettsezis/flui.git && cd flui
+docker build -f deploy/docker/Dockerfile -t flui .
 docker run -d --name flui \
   -p 8443:8443 \
   -v flui-data:/data \
   --read-only --cap-drop ALL --security-opt no-new-privileges \
-  ghcr.io/ahmettsezis/flui:<version>
+  flui
 ```
 
 The image is distroless, runs as non-root (UID 65532) and stores everything in `/data`.
 
-## Option 4 – Docker Compose
+## Option 3 – Docker Compose
 
 ```sh
-curl -fsSLO https://raw.githubusercontent.com/ahmettsezis/flui/main/deploy/compose/docker-compose.yml
-docker compose up -d
+git clone https://github.com/ahmettsezis/flui.git && cd flui
+docker compose -f deploy/compose/docker-compose.yml up -d --build
 ```
-
-## Option 5 – Kubernetes (Helm)
-
-```sh
-helm install flui oci://ghcr.io/ahmettsezis/charts/flui --namespace flui --create-namespace
-```
-
-flui uses SQLite, so it runs as a single replica (StatefulSet with a PersistentVolumeClaim).
 
 ## First login
 
@@ -87,8 +72,8 @@ On first start flui creates the user `admin` with a random password and writes i
 and to `<data_dir>/initial-admin-password` (mode `0600`):
 
 ```sh
-sudo cat /var/lib/flui/initial-admin-password          # package / tarball
-docker logs flui 2>&1 | grep "initial admin password"  # Docker
+sudo cat /var/lib/flui/initial-admin-password            # systemd install
+docker logs flui 2>&1 | grep "initial admin password"    # Docker / Compose
 ```
 
 1. Open `https://<host>:8443`. With the default self-signed certificate your browser will warn once;
@@ -98,17 +83,5 @@ docker logs flui 2>&1 | grep "initial admin password"  # Docker
 
 ## Upgrade
 
-Install the new package / image and restart. Database migrations run automatically on start.
-Take a [backup](#backup-and-restore) first.
-
-## Backup and restore
-
-```sh
-sudo -u flui flui-server backup /var/backups/flui-$(date +%F).db   # online, consistent snapshot
-```
-
-Also back up the master key (`/var/lib/flui/master.key` by default) **separately** – without it,
-encrypted settings in the database cannot be read.
-
-To restore: stop flui, replace `<data_dir>/flui.db` with the backup, make sure the matching master key is in
-place, start flui.
+Rebuild and restart. Database migrations run automatically on start. `flui.db` contains only metric
+samples, so deleting it and starting fresh is also safe.

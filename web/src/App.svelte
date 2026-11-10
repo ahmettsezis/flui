@@ -58,7 +58,6 @@
 {/if}
 
 <style>
-  .center { display: grid; place-items: center; min-height: 100vh; }
   .topbar {
     display: flex; align-items: center; gap: 1.5rem;
     padding: 0.6rem 1.5rem; background: var(--card);

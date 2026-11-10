@@ -127,7 +127,12 @@ func (c *Collector) CollectOnce(ctx context.Context) error {
 			defer wg.Done()
 			sem <- struct{}{}
 			defer func() { <-sem }()
-			results[i] = c.collectNode(ctx, n)
+			results[i] = result{node: n, ts: c.now()}
+			if ps, err := fetchPlugins(ctx, c.client, n.MonitorURL); err != nil {
+				results[i].err = err
+			} else {
+				results[i].plugins = ps
+			}
 		}()
 	}
 	wg.Wait()
@@ -176,16 +181,6 @@ func (c *Collector) CollectOnce(ctx context.Context) error {
 		st.prev, st.cur = st.cur, snap
 	}
 	return nil
-}
-
-func (c *Collector) collectNode(ctx context.Context, n nodes.Node) result {
-	r := result{node: n, ts: c.now()}
-	if ps, err := fetchPlugins(ctx, c.client, n.MonitorURL); err != nil {
-		r.err = err
-	} else {
-		r.plugins = ps
-	}
-	return r
 }
 
 // Test checks that a monitor_agent is reachable and returns the number of output plugins.

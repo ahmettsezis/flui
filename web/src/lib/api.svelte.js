@@ -1,13 +1,11 @@
 let csrfToken = null;
 export const session = $state({ user: null, ready: false });
 
-export function setSession(user, csrf) {
+function setSession(user, csrf) {
   session.user = user;
   session.ready = true;
   csrfToken = csrf;
 }
-
-export function csrf() { return csrfToken; }
 
 export class ApiError extends Error {
   constructor(status, body) {
@@ -69,3 +67,5 @@ export function bytes(v) {
 }
 export function rate(v, unit = '/s') { return v == null ? '–' : `${v >= 100 ? Math.round(v) : v.toFixed(1)}${unit}`; }
 export function num(v) { return v == null ? '–' : Math.round(v).toLocaleString('en'); }
+export function pct(v) { return v == null ? '–' : v.toFixed(1) + '%'; }
+export const stateLabel = { up: 'Up', down: 'Down', stale: 'Stale', pending: 'Pending' };

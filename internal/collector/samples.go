@@ -8,19 +8,17 @@ import (
 
 func insertSamples(ctx context.Context, tx *sql.Tx, nodeID int64, ts time.Time, ps []PluginMetrics) error {
 	stmt, err := tx.PrepareContext(ctx, `INSERT INTO plugin_samples (node_id, ts, plugin_id, type,
-		buffer_queue_length, buffer_queue_byte_size, buffer_stage_length, buffer_stage_byte_size, buffer_total_queued_size,
-		buffer_available_ratio, retry_count, emit_records, emit_count, write_count, rollback_count, slow_flush_count, flush_time_count)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+		buffer_queue_length, buffer_stage_length, buffer_total_queued_size,
+		buffer_available_ratio, retry_count, emit_records, write_count)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
 		return err
 	}
 	defer func() { _ = stmt.Close() }()
 	for _, p := range ps {
 		if _, err := stmt.ExecContext(ctx, nodeID, ts.Unix(), p.PluginID, p.Type,
-			intOrNil(p.BufferQueueLength), intOrNil(p.BufferQueueByteSize), intOrNil(p.BufferStageLength),
-			intOrNil(p.BufferStageByteSize), intOrNil(p.BufferTotalQueuedSize), floatOrNil(p.BufferAvailableRatio),
-			intOrNil(p.RetryCount), intOrNil(p.EmitRecords), intOrNil(p.EmitCount), intOrNil(p.WriteCount),
-			intOrNil(p.RollbackCount), intOrNil(p.SlowFlushCount), intOrNil(p.FlushTimeCount)); err != nil {
+			intOrNil(p.BufferQueueLength), intOrNil(p.BufferStageLength), intOrNil(p.BufferTotalQueuedSize),
+			floatOrNil(p.BufferAvailableRatio), intOrNil(p.RetryCount), intOrNil(p.EmitRecords), intOrNil(p.WriteCount)); err != nil {
 			return err
 		}
 	}

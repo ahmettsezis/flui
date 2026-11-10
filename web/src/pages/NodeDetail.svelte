@@ -1,5 +1,5 @@
 <script>
-  import { api, bytes, rate, num, navigate, session } from '../lib/api.svelte.js';
+  import { api, bytes, rate, num, pct, stateLabel, navigate, session } from '../lib/api.svelte.js';
   import Chart from '../lib/Chart.svelte';
   import NodeForm from './NodeForm.svelte';
   import { aggregatePlugins, pluginRows, filterAndSortPlugins, pluginKey } from '../lib/metrics.js';
@@ -9,7 +9,7 @@
   let editing = $state(false), deleting = $state(false);
   let query = $state(''), filter = $state('all'), sort = $state('attention'), descending = $state(false);
   let selectedKey = $state(null);
-  const ranges = [['15m', '15m'], ['1h', '1h'], ['6h', '6h'], ['24h', '24h'], ['2d', '2d'], ['7d', '7d']];
+  const ranges = ['15m', '1h', '6h', '24h', '2d', '7d'];
   const palette = ['#2563eb', '#dc2626', '#16a34a', '#d97706', '#7c3aed', '#0891b2', '#db2777', '#65a30d'];
 
   async function load(nodeID, selectedRange, signal) {
@@ -49,7 +49,6 @@
     ['buffer_total_queued_size', 'Buffered'], ['buffer_queue_length', 'Queue'],
     ['retry_count', 'Retry counter'], ['emit_records_rate', 'Records/s'], ['buffer_available_ratio', 'Free buffer'],
   ];
-  const stateLabel = { up: 'Up', down: 'Down', stale: 'Stale', pending: 'Pending' };
   const lastError = $derived(node?.status?.last_error || '');
   const canEdit = $derived(session.user?.role !== 'viewer');
 </script>
@@ -81,7 +80,7 @@
     <div class="stat"><small>Buffered</small><strong>{bytes(node.status.summary?.buffer_bytes)}</strong></div>
     <div class="stat"><small>Queue (chunks)</small><strong>{num(node.status.summary?.queue_length)}</strong></div>
     <div class="stat"><small>Retry counter</small><strong>{num(node.status.summary?.retry_count)}</strong></div>
-    <div class="stat"><small>Lowest free buffer</small><strong>{node.status.summary?.min_available_ratio == null ? '–' : node.status.summary.min_available_ratio.toFixed(1) + '%'}</strong></div>
+    <div class="stat"><small>Lowest free buffer</small><strong>{pct(node.status.summary?.min_available_ratio)}</strong></div>
     <div class="stat"><small>Throughput</small><strong>{rate(node.status.summary?.emit_records_rate, ' rec/s')}</strong></div>
     <div class="stat"><small>Writes</small><strong>{rate(node.status.summary?.write_rate, ' flushes/s')}</strong></div>
   </div>
@@ -90,8 +89,8 @@
     Up means monitor_agent is reachable; it does not confirm delivery to OpenSearch.</p>
 
   <div class="ranges">
-    {#each ranges as [v, label] (v)}
-      <button class:active={range === v} onclick={() => range = v}>{label}</button>
+    {#each ranges as v (v)}
+      <button class:active={range === v} onclick={() => range = v}>{v}</button>
     {/each}
   </div>
 
@@ -146,7 +145,7 @@
                 <td class="numeric">{num(p.buffer_queue_length)}</td>
                 <td class="numeric">{num(p.retry_count)}</td>
                 <td class="numeric">{rate(p.emit_records_rate)}</td>
-                <td class="numeric">{p.buffer_available_ratio == null ? '–' : p.buffer_available_ratio.toFixed(1) + '%'}</td>
+                <td class="numeric">{pct(p.buffer_available_ratio)}</td>
               </tr>
             {/each}
           </tbody>
@@ -191,8 +190,7 @@
   h1 small { font-size: 0.8rem; color: var(--muted); font-weight: 400; }
   h1 .dot { margin: 0 0.4rem; }
   .row { display: flex; gap: 0.5rem; }
-  .muted { color: var(--muted); margin: 0.3rem 0 0; }
-  .error { color: var(--bad); }
+  .muted { margin: 0.3rem 0 0; }
   .mono { font-family: ui-monospace, monospace; }
   .dot { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 50%; background: var(--muted); }
   .dot.up { background: var(--ok); }

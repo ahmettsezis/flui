@@ -26,6 +26,17 @@
 
 body { margin: 0; }
 
+.center { display: grid; place-items: center; min-height: 100vh; }
+.muted { color: var(--muted); }
+.error { color: var(--bad); }
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+}
+
 .card {
   background: var(--card);
   border: 1px solid var(--border);

@@ -25,8 +25,6 @@ const (
 
 var roleRank = map[Role]int{RoleViewer: 1, RoleOperator: 2, RoleAdmin: 3}
 
-func (r Role) Valid() bool { return roleRank[r] > 0 }
-
 // Allows reports whether r has at least the privileges of required.
 func (r Role) Allows(required Role) bool {
 	return roleRank[r] >= roleRank[required] && roleRank[required] > 0
@@ -48,7 +46,6 @@ type User struct {
 type Session struct {
 	IDHash    []byte
 	CSRFToken string
-	ExpiresAt time.Time
 }
 
 type Service struct {
@@ -153,12 +150,13 @@ func (s *Service) Login(ctx context.Context, username, password, ip, userAgent s
 func (s *Service) newSession(ctx context.Context, userID int64, ip, userAgent string) (string, *Session, error) {
 	raw := randomToken()
 	now := s.now()
-	sess := &Session{IDHash: hashSessionID(raw), CSRFToken: randomToken(), ExpiresAt: now.Add(s.cfg.SessionMaxLifetime.D())}
+	sess := &Session{IDHash: hashSessionID(raw), CSRFToken: randomToken()}
 	if len(userAgent) > 256 {
 		userAgent = userAgent[:256]
 	}
 	_, err := s.db.ExecContext(ctx, `INSERT INTO sessions (id_hash, user_id, csrf_token, created_at, last_seen_at, expires_at, ip, user_agent)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, sess.IDHash, userID, sess.CSRFToken, now.Unix(), now.Unix(), sess.ExpiresAt.Unix(), ip, strings.ToValidUTF8(userAgent, ""))
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, sess.IDHash, userID, sess.CSRFToken, now.Unix(), now.Unix(),
+		now.Add(s.cfg.SessionMaxLifetime.D()).Unix(), ip, strings.ToValidUTF8(userAgent, ""))
 	return raw, sess, err
 }
 
@@ -193,7 +191,6 @@ func (s *Service) Authenticate(ctx context.Context, raw string) (*Session, *User
 			return nil, nil, err
 		}
 	}
-	sess.ExpiresAt = time.Unix(expiresAt, 0)
 	return &sess, &u, nil
 }
 

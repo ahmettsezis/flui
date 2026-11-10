@@ -22,9 +22,8 @@
 </div>
 
 <style>
-  .center { display: grid; place-items: center; min-height: 100vh; }
   .login { width: 20rem; display: flex; flex-direction: column; gap: 0.8rem; }
   h1 { margin: 0 0 0.5rem; text-align: center; }
-  label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.85rem; color: var(--muted); }
-  .error { color: var(--bad); margin: 0; font-size: 0.85rem; }
+  label { color: var(--muted); }
+  .error { margin: 0; font-size: 0.85rem; }
 </style>

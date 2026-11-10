@@ -27,15 +27,4 @@ Please include:
 
 We will credit you in the advisory unless you prefer to stay anonymous.
 
-## Verifying releases
-
-Release binaries come with `checksums.txt`. Container images and checksums are signed with
-[cosign](https://github.com/sigstore/cosign) (keyless) and ship with an SBOM:
-
-```sh
-cosign verify ghcr.io/ahmettsezis/flui:<version> \
-  --certificate-identity-regexp 'https://github.com/ahmettsezis/flui/.*' \
-  --certificate-oidc-issuer https://token.actions.githubusercontent.com
-```
-
 See [docs/security.md](docs/security.md) for the security model.

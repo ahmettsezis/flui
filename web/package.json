@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "test": "node --test src/lib/*.test.js",
-    "build": "vite build"
+    "build": "vite build && touch ../internal/webui/dist/.gitkeep"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "7.3.1",

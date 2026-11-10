@@ -18,8 +18,8 @@ import (
 
 const (
 	DefaultPath  = "/etc/flui/flui.yaml"
-	EnvPrefix    = "FLUI"
-	MaxRetention = 365 * Day
+	envPrefix    = "FLUI"
+	maxRetention = 365 * Day
 )
 
 type Config struct {
@@ -50,11 +50,11 @@ type Log struct {
 }
 
 type Auth struct {
-	SessionIdleTimeout   Duration `yaml:"session_idle_timeout"`
-	SessionMaxLifetime   Duration `yaml:"session_max_lifetime"`
-	PasswordMinLength    int      `yaml:"password_min_length"`
-	LockoutThreshold     int      `yaml:"lockout_threshold"`
-	LockoutDuration      Duration `yaml:"lockout_duration"`
+	SessionIdleTimeout Duration `yaml:"session_idle_timeout"`
+	SessionMaxLifetime Duration `yaml:"session_max_lifetime"`
+	PasswordMinLength  int      `yaml:"password_min_length"`
+	LockoutThreshold   int      `yaml:"lockout_threshold"`
+	LockoutDuration    Duration `yaml:"lockout_duration"`
 }
 
 type Collector struct {
@@ -100,7 +100,7 @@ func Load(path string, required bool, environ []string) (Config, error) {
 	default:
 		return cfg, err
 	}
-	if err := applyEnv(&cfg, EnvPrefix, environ); err != nil {
+	if err := applyEnv(&cfg, envPrefix, environ); err != nil {
 		return cfg, err
 	}
 	if cfg.MasterKeyFile == "" {
@@ -172,8 +172,8 @@ func (c Config) Validate() error {
 	if c.Collector.StaleAfter < c.Collector.Interval {
 		add("collector.stale_after: must be at least collector.interval")
 	}
-	if c.Retention.D() < time.Hour || c.Retention.D() > MaxRetention {
-		add("retention: must be between 1h and %s", Duration(MaxRetention))
+	if c.Retention.D() < time.Hour || c.Retention.D() > maxRetention {
+		add("retention: must be between 1h and %s", Duration(maxRetention))
 	}
 	return errors.Join(errs...)
 }

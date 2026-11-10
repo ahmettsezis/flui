@@ -1,5 +1,5 @@
 <script>
-  import { api, bytes, rate, num } from '../lib/api.svelte.js';
+  import { api, bytes, rate, num, pct, stateLabel } from '../lib/api.svelte.js';
   let nodes = $state(null), error = $state(''), lastRefresh = $state(null);
 
   async function load() {
@@ -12,8 +12,6 @@
     const id = setInterval(load, 10000);
     return () => clearInterval(id);
   });
-
-  const stateLabel = { up: 'Up', down: 'Down', stale: 'Stale', pending: 'Pending' };
 </script>
 
 <div class="head">
@@ -53,7 +51,7 @@
             <td class="num">{bytes(n.status.summary?.buffer_bytes)}</td>
             <td class="num">{num(n.status.summary?.queue_length)}</td>
             <td class="num" class:warn={n.status.summary?.retry_count > 0}>{num(n.status.summary?.retry_count)}</td>
-            <td class="num">{n.status.summary?.min_available_ratio == null ? '–' : n.status.summary.min_available_ratio.toFixed(1) + '%'}</td>
+            <td class="num">{pct(n.status.summary?.min_available_ratio)}</td>
             <td class="num">{rate(n.status.summary?.emit_records_rate)}</td>
           </tr>
         {/each}
@@ -65,7 +63,7 @@
 <style>
   .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
   .row { display: flex; gap: 0.6rem; align-items: center; }
-  .muted { color: var(--muted); font-size: 0.85rem; }
+  .muted { font-size: 0.85rem; }
   h1 { margin: 0; font-size: 1.3rem; }
   .empty { text-align: center; padding: 2.5rem; }
   .empty h2 { margin-top: 0; font-size: 1.1rem; }

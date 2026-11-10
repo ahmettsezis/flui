@@ -2,7 +2,7 @@
   import { untrack } from 'svelte';
   import { api, navigate } from '../lib/api.svelte.js';
 
-  let { id = null, node = null } = $props();
+  let { node = null } = $props();
   let name = $state(untrack(() => node?.name ?? ''));
   let monitor_url = $state(untrack(() => node?.monitor_url ?? 'http://'));
   let error = $state(''), fieldError = $state({}), testResult = $state(null), busy = $state(false);
@@ -10,10 +10,8 @@
 
   async function test() {
     busy = true; testResult = null; error = '';
-    try {
-      const r = await api('/api/v1/nodes/test', { method: 'POST', body: { monitor_url } });
-      testResult = r;
-    } catch (e) { applyErr(e); }
+    try { testResult = await api('/api/v1/nodes/test', { method: 'POST', body: { monitor_url } }); }
+    catch (e) { applyErr(e); }
     finally { busy = false; }
   }
 
@@ -21,9 +19,8 @@
     e.preventDefault();
     busy = true; error = ''; fieldError = {};
     try {
-      const r = node
-        ? await api(`/api/v1/nodes/${node.id}`, { method: 'PUT', body: { name, monitor_url } })
-        : await api('/api/v1/nodes', { method: 'POST', body: { name, monitor_url } });
+      const r = await api(node ? `/api/v1/nodes/${node.id}` : '/api/v1/nodes',
+        { method: node ? 'PUT' : 'POST', body: { name, monitor_url } });
       if (node) navigate(`/nodes/${node.id}`);
       else added = r;
     } catch (e2) { applyErr(e2); }
@@ -87,10 +84,9 @@
   h1 { margin: 0; font-size: 1.3rem; }
   form { display: flex; flex-direction: column; gap: 1rem; max-width: 34rem; }
   h1, .muted { margin-bottom: 0; }
-  label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.85rem; }
   .mono { font-family: ui-monospace, monospace; }
   .row { display: flex; gap: 1rem; align-items: center; }
   .ok { color: var(--ok); margin: 0; }
-  .error { color: var(--bad); margin: 0; }
+  .error { margin: 0; }
   .snippet { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 1rem; overflow-x: auto; font-size: 0.8rem; }
 </style>

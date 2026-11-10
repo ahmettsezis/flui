@@ -49,7 +49,7 @@ func (s *server) getNode(w http.ResponseWriter, r *http.Request) {
 	if s.nodeErr(w, r, err) {
 		return
 	}
-	writeJSON(w, http.StatusOK, nodeResponse{Node: n, Status: s.Collector.Status(n.ID), Snippet: nodes.Snippet(n)})
+	writeJSON(w, http.StatusOK, nodeResponse{Node: n, Status: s.Collector.Status(n.ID)})
 }
 
 func (s *server) createNode(w http.ResponseWriter, r *http.Request) {
@@ -82,7 +82,7 @@ func (s *server) updateNode(w http.ResponseWriter, r *http.Request) {
 	s.audit(r, "node.update", n)
 	s.Collector.Forget(n.ID)
 	s.Collector.Trigger()
-	writeJSON(w, http.StatusOK, nodeResponse{Node: n, Status: s.Collector.Status(n.ID), Snippet: nodes.Snippet(n)})
+	writeJSON(w, http.StatusOK, nodeResponse{Node: n, Status: s.Collector.Status(n.ID)})
 }
 
 func (s *server) deleteNode(w http.ResponseWriter, r *http.Request) {

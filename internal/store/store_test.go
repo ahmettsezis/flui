@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"database/sql"
 	"os"
 	"path/filepath"
 	"testing"
@@ -48,37 +47,6 @@ func TestMigrateIsIdempotent(t *testing.T) {
 	var fk int
 	if err := s.DB.QueryRowContext(ctx, `PRAGMA foreign_keys`).Scan(&fk); err != nil || fk != 1 {
 		t.Errorf("foreign_keys = %d, err = %v", fk, err)
-	}
-}
-
-func TestBackup(t *testing.T) {
-	s, _ := open(t)
-	ctx := context.Background()
-	if _, err := s.Migrate(ctx); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := s.DB.ExecContext(ctx, `INSERT INTO settings (key, value, updated_at) VALUES ('k', X'76', 1)`); err != nil {
-		t.Fatal(err)
-	}
-	dst := filepath.Join(t.TempDir(), "backup.db")
-	if err := s.Backup(ctx, dst); err != nil {
-		t.Fatal(err)
-	}
-	if err := s.Backup(ctx, dst); err == nil {
-		t.Error("backup over existing file should fail")
-	}
-
-	if st, _ := os.Stat(dst); st.Mode().Perm() != 0o600 {
-		t.Errorf("backup mode = %v", st.Mode().Perm())
-	}
-	restored, err := sql.Open("sqlite", "file:"+dst+"?mode=ro")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer restored.Close()
-	var v string
-	if err := restored.QueryRowContext(ctx, `SELECT value FROM settings WHERE key = 'k'`).Scan(&v); err != nil || v != "v" {
-		t.Fatalf("restored value = %q, err = %v", v, err)
 	}
 }
 

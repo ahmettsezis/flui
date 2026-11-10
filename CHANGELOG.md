@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   (`retention: 30d`) instead of a `raw`/`minute`/`hour`/`logs` map.
 - **Breaking:** multi-worker support is removed. Each node polls a single `monitor_agent` URL; the
   `workers` fields and the `worker` column are dropped from the API and database.
+- Metric columns that were collected but never displayed (`buffer_*_byte_size`, `emit_count`,
+  `rollback_count`, `slow_flush_count`, `flush_time_count`) are no longer stored.
+- **Removed:** the `flui-server backup` command. `flui.db` holds only metric samples and can be
+  replaced by a fresh database at any time.
 - Node details now show aggregate charts and a searchable, sortable output table with activity filters.
   Plugin charts open on selection instead of rendering every plugin at once.
 - Explain generated Fluentd IDs, missing metrics, buffer percentages and retry counters in the dashboard.
@@ -21,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - Project documentation and repository layout.
 - `flui-server` skeleton: configuration (file + `FLUI_*` environment), SQLite storage with migrations,
-  `backup` command, master key encryption, internal CA with automatic self-signed server certificate,
+  master key encryption, internal CA with automatic self-signed server certificate,
   HTTPS (TLS 1.2+) with security headers, `/healthz` and `/readyz`, embedded web UI.
 - Container image (distroless, non-root) and Docker Compose example.
 - Local users and sign-in: Argon2id hashing, server-side sessions, CSRF and origin checks, account lockout,

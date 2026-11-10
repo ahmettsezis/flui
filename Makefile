@@ -3,7 +3,7 @@ COMMIT  ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo none)
 DATE    ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 PKG     := github.com/ahmettsezis/flui/internal/version
 LDFLAGS := -s -w -X $(PKG).Version=$(VERSION) -X $(PKG).Commit=$(COMMIT) -X $(PKG).Date=$(DATE)
-IMAGE   ?= ghcr.io/ahmettsezis/flui
+IMAGE   ?= flui
 
 GOLANGCI_LINT_VERSION := v2.15.0
 GOVULNCHECK_VERSION   := v1.9.0
@@ -21,7 +21,6 @@ web/node_modules: web/package-lock.json
 
 web: web/node_modules
 	npm --prefix web run build
-	@touch internal/webui/dist/.gitkeep
 
 build: web
 	CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" -o bin/flui-server ./cmd/flui-server

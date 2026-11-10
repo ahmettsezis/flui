@@ -26,7 +26,6 @@ const usage = `Usage: flui-server [command] [--config path]
 
 Commands:
   serve             Run the server (default)
-  backup <file>     Write a consistent snapshot of the database to <file>
   tls fingerprint   Print the SHA-256 fingerprints of the server certificate and internal CA
   user reset-password <username>
                     Set a new random password (must be changed at next sign-in) and unlock the account
@@ -49,8 +48,6 @@ func run(args []string, stdout, stderr io.Writer) int {
 	switch cmd {
 	case "serve":
 		err = cmdServe(args, stderr)
-	case "backup":
-		err = cmdBackup(args, stdout)
 	case "tls":
 		err = cmdTLS(args, stdout)
 	case "user":
@@ -113,30 +110,6 @@ func cmdServe(args []string, stderr io.Writer) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	return server.Run(ctx, cfg, server.NewLogger(cfg.Log, stderr), nil)
-}
-
-func cmdBackup(args []string, stdout io.Writer) error {
-	cfg, rest, err := parse("backup", args)
-	if err != nil {
-		return err
-	}
-	if len(rest) != 1 {
-		return usageError("backup requires exactly one destination file")
-	}
-	if _, err := os.Stat(filepath.Join(cfg.DataDir, store.FileName)); errors.Is(err, fs.ErrNotExist) {
-		return fmt.Errorf("no database found in %s", cfg.DataDir)
-	}
-	ctx := context.Background()
-	st, err := store.Open(ctx, cfg.DataDir)
-	if err != nil {
-		return err
-	}
-	defer st.Close()
-	if err := st.Backup(ctx, rest[0]); err != nil {
-		return err
-	}
-	_, err = fmt.Fprintln(stdout, "backup written to", rest[0])
-	return err
 }
 
 func cmdUser(args []string, stdout io.Writer) error {

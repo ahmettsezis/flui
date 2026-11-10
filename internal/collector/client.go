@@ -23,18 +23,12 @@ type PluginMetrics struct {
 	OutputPlugin bool   `json:"output_plugin"`
 
 	BufferQueueLength     *float64 `json:"buffer_queue_length"`
-	BufferQueueByteSize   *float64 `json:"buffer_queue_byte_size"`
 	BufferStageLength     *float64 `json:"buffer_stage_length"`
-	BufferStageByteSize   *float64 `json:"buffer_stage_byte_size"`
 	BufferTotalQueuedSize *float64 `json:"buffer_total_queued_size"`
 	BufferAvailableRatio  *float64 `json:"buffer_available_buffer_space_ratios"`
 	RetryCount            *float64 `json:"retry_count"`
 	EmitRecords           *float64 `json:"emit_records"`
-	EmitCount             *float64 `json:"emit_count"`
 	WriteCount            *float64 `json:"write_count"`
-	RollbackCount         *float64 `json:"rollback_count"`
-	SlowFlushCount        *float64 `json:"slow_flush_count"`
-	FlushTimeCount        *float64 `json:"flush_time_count"`
 }
 
 func newHTTPClient(timeout time.Duration) *http.Client {

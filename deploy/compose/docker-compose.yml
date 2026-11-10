@@ -2,7 +2,10 @@
 # First login: docker compose logs flui | grep "initial admin password"
 services:
   flui:
-    image: ghcr.io/ahmettsezis/flui:latest
+    image: flui
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
     restart: unless-stopped
     ports:
       - "8443:8443"

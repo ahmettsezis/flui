@@ -46,13 +46,12 @@ Per output plugin, from `/api/plugins.json`:
 
 | Metric | Meaning |
 |---|---|
-| `buffer_queue_length`, `buffer_queue_byte_size` | Chunks waiting to be flushed |
-| `buffer_stage_length`, `buffer_stage_byte_size` | Chunks still being filled |
+| `buffer_queue_length` | Chunks waiting to be flushed |
+| `buffer_stage_length` | Chunks still being filled |
 | `buffer_total_queued_size` | Total buffered bytes |
 | `buffer_available_buffer_space_ratios` | Free buffer space (%) |
-| `retry_count`, `retry` | Retries and next retry time |
-| `emit_records`, `emit_count`, `write_count` | Shown as rates (records/s, writes/s) |
-| `rollback_count`, `slow_flush_count`, `flush_time_count` | Output health |
+| `retry_count` | Cumulative retries, also shown as a rate |
+| `emit_records`, `write_count` | Shown as rates (records/s, writes/s) |
 
 A node is shown as **Down** when it cannot be reached and **Stale** when no data arrived within
 `collector.stale_after` (see [configuration](configuration.md)).
