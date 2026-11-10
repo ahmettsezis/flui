@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
-	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -154,35 +153,11 @@ func TestStaleState(t *testing.T) {
 	}
 }
 
-func TestMultiWorker(t *testing.T) {
-	_, repo, c := setup(t)
-	ctx := context.Background()
-	srv, calls := fakeFluentd(t, 1)
-	// Worker 1 listens on port+1: start a second listener there if free.
-	_, port, _ := net.SplitHostPort(srv.Listener.Addr().String())
-	var p int
-	fmt.Sscan(port, &p)
-	ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", p+1))
-	if err != nil {
-		t.Skip("port+1 not available")
-	}
-	second := &httptest.Server{Listener: ln, Config: &http.Server{Handler: srv.Config.Handler}}
-	second.Start()
-	defer second.Close()
-
-	counts, err := c.Test(ctx, srv.URL, 2)
-	if err != nil || len(counts) != 2 || counts[0] != 2 {
-		t.Fatalf("Test = %v, %v", counts, err)
-	}
-	n, _ := repo.Create(ctx, nodes.Input{Name: "mw", MonitorURL: srv.URL, Workers: 2})
-	calls.Store(0)
-	if err := c.CollectOnce(ctx); err != nil {
-		t.Fatal(err)
-	}
-	if calls.Load() != 2 || c.Status(n.ID).Summary.Plugins != 4 {
-		t.Fatalf("calls=%d status=%+v", calls.Load(), c.Status(n.ID).Summary)
-	}
-	if _, err := c.Test(ctx, srv.URL, 3); err == nil || !strings.Contains(err.Error(), "worker 2") {
-		t.Errorf("missing worker: %v", err)
+func TestTest(t *testing.T) {
+	_, _, c := setup(t)
+	srv, _ := fakeFluentd(t, 1)
+	count, err := c.Test(context.Background(), srv.URL)
+	if err != nil || count != 2 {
+		t.Fatalf("Test = %d, %v", count, err)
 	}
 }

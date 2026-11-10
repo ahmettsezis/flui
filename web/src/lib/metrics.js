@@ -3,7 +3,7 @@ const sumFields = [
   'emit_records_rate', 'write_rate', 'retry_rate',
 ];
 const fields = [...sumFields, 'buffer_available_ratio', 'retry_count'];
-export const pluginKey = p => `${p.worker}/${p.plugin_id}`;
+export const pluginKey = p => p.plugin_id;
 
 // Align by timestamp, never by array index: plugins can appear/disappear independently.
 // Unknown values stay unknown; aggregates include only values actually reported.
@@ -46,7 +46,7 @@ export function pluginRows(plugins) {
 
 export function filterAndSortPlugins(rows, query, filter, sort, descending) {
   const search = query.trim().toLowerCase();
-  return rows.filter(p => `${p.plugin_id} ${p.type} worker ${p.worker + 1}`.toLowerCase().includes(search))
+  return rows.filter(p => `${p.plugin_id} ${p.type}`.toLowerCase().includes(search))
     .filter(p => filter === 'all' || (!p.historical && (filter === 'attention' ? p.attention : p.attention || p.active)))
     .sort((a, b) => {
       let result;
@@ -62,6 +62,6 @@ export function filterAndSortPlugins(rows, query, filter, sort, descending) {
         result = typeof av === 'string' ? av.localeCompare(bv) : av - bv;
         if (descending) result *= -1;
       }
-      return result || a.plugin_id.localeCompare(b.plugin_id) || a.worker - b.worker;
+      return result || a.plugin_id.localeCompare(b.plugin_id);
     });
 }

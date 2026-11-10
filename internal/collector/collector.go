@@ -4,7 +4,6 @@ package collector
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -43,7 +42,7 @@ type Summary struct {
 
 type snapshot struct {
 	ts      time.Time
-	plugins map[string]PluginMetrics // key: worker/plugin_id
+	plugins map[string]PluginMetrics // key: plugin_id
 }
 
 type nodeState struct {
@@ -110,7 +109,7 @@ func (c *Collector) Forget(id int64) {
 type result struct {
 	node    nodes.Node
 	ts      time.Time
-	workers map[int][]PluginMetrics
+	plugins []PluginMetrics
 	err     error
 }
 
@@ -139,10 +138,8 @@ func (c *Collector) CollectOnce(ctx context.Context) error {
 	}
 	defer tx.Rollback() //nolint:errcheck // no-op after commit
 	for _, r := range results {
-		for w, ps := range r.workers {
-			if err := insertSamples(ctx, tx, r.node.ID, r.ts, w, ps); err != nil {
-				return err
-			}
+		if err := insertSamples(ctx, tx, r.node.ID, r.ts, r.plugins); err != nil {
+			return err
 		}
 	}
 	if err := tx.Commit(); err != nil {
@@ -173,10 +170,8 @@ func (c *Collector) CollectOnce(ctx context.Context) error {
 		}
 		st.lastErr, st.lastSuccess = "", r.ts
 		snap := &snapshot{ts: r.ts, plugins: map[string]PluginMetrics{}}
-		for w, ps := range r.workers {
-			for _, p := range ps {
-				snap.plugins[fmt.Sprintf("%d/%s", w, p.PluginID)] = p
-			}
+		for _, p := range r.plugins {
+			snap.plugins[p.PluginID] = p
 		}
 		st.prev, st.cur = st.cur, snap
 	}
@@ -184,42 +179,22 @@ func (c *Collector) CollectOnce(ctx context.Context) error {
 }
 
 func (c *Collector) collectNode(ctx context.Context, n nodes.Node) result {
-	r := result{node: n, ts: c.now(), workers: map[int][]PluginMetrics{}}
-	for w := range n.Workers {
-		u, err := nodes.WorkerURL(n.MonitorURL, w)
-		if err == nil {
-			var ps []PluginMetrics
-			if ps, err = fetchPlugins(ctx, c.client, u); err == nil {
-				r.workers[w] = ps
-				continue
-			}
-		}
-		if n.Workers > 1 {
-			err = fmt.Errorf("worker %d: %w", w, err)
-		}
+	r := result{node: n, ts: c.now()}
+	if ps, err := fetchPlugins(ctx, c.client, n.MonitorURL); err != nil {
 		r.err = err
+	} else {
+		r.plugins = ps
 	}
 	return r
 }
 
-// Test checks that a monitor_agent is reachable and returns the number of output plugins per worker.
-func (c *Collector) Test(ctx context.Context, monitorURL string, workers int) ([]int, error) {
-	counts := make([]int, 0, workers)
-	for w := range workers {
-		u, err := nodes.WorkerURL(monitorURL, w)
-		if err != nil {
-			return nil, err
-		}
-		ps, err := fetchPlugins(ctx, c.client, u)
-		if err != nil {
-			if workers > 1 {
-				return counts, fmt.Errorf("worker %d (%s): %w", w, u, err)
-			}
-			return counts, err
-		}
-		counts = append(counts, len(ps))
+// Test checks that a monitor_agent is reachable and returns the number of output plugins.
+func (c *Collector) Test(ctx context.Context, monitorURL string) (int, error) {
+	ps, err := fetchPlugins(ctx, c.client, monitorURL)
+	if err != nil {
+		return 0, err
 	}
-	return counts, nil
+	return len(ps), nil
 }
 
 func (c *Collector) Status(id int64) Status {

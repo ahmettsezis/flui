@@ -5,14 +5,13 @@
   let { id = null, node = null } = $props();
   let name = $state(untrack(() => node?.name ?? ''));
   let monitor_url = $state(untrack(() => node?.monitor_url ?? 'http://'));
-  let workers = $state(untrack(() => node?.workers ?? 1));
   let error = $state(''), fieldError = $state({}), testResult = $state(null), busy = $state(false);
   let added = $state(null); // created node with snippet (only on create)
 
   async function test() {
     busy = true; testResult = null; error = '';
     try {
-      const r = await api('/api/v1/nodes/test', { method: 'POST', body: { monitor_url, workers } });
+      const r = await api('/api/v1/nodes/test', { method: 'POST', body: { monitor_url } });
       testResult = r;
     } catch (e) { applyErr(e); }
     finally { busy = false; }
@@ -23,8 +22,8 @@
     busy = true; error = ''; fieldError = {};
     try {
       const r = node
-        ? await api(`/api/v1/nodes/${node.id}`, { method: 'PUT', body: { name, monitor_url, workers } })
-        : await api('/api/v1/nodes', { method: 'POST', body: { name, monitor_url, workers } });
+        ? await api(`/api/v1/nodes/${node.id}`, { method: 'PUT', body: { name, monitor_url } })
+        : await api('/api/v1/nodes', { method: 'POST', body: { name, monitor_url } });
       if (node) navigate(`/nodes/${node.id}`);
       else added = r;
     } catch (e2) { applyErr(e2); }
@@ -43,7 +42,7 @@
     <p>Copy this block into the Fluentd configuration on <strong>{added.name}</strong> and reload Fluentd.
        flui will start collecting within one interval.</p>
     <pre class="snippet">{added.snippet}</pre>
-    <p class="muted">Allow TCP {portRange(added.monitor_url, added.workers)} only from the flui server — monitor_agent has no authentication.</p>
+    <p class="muted">Allow TCP {added.monitor_url.match(/:(\d+)$/)?.[1] ?? '24220'} only from the flui server — monitor_agent has no authentication.</p>
     <div class="row">
       <a class="btn" href="#/nodes/{added.id}">Open node</a>
       <a class="link" href="#/">Back to nodes</a>
@@ -66,15 +65,9 @@
       <small class="muted">Host and port of Fluentd's <code>monitor_agent</code>.</small>
       {#if fieldError.monitor_url}<span class="error">{fieldError.monitor_url}</span>{/if}
     </label>
-    <label>
-      Workers
-      <input type="number" min="1" max="64" bind:value={workers} />
-      <small class="muted">&gt;1 for Fluentd multi-worker; each worker listens on port + worker_id.</small>
-    </label>
-
     {#if testResult}
       {#if testResult.ok}
-        <p class="ok">Reachable — output plugins found per worker: {testResult.output_plugins.join(', ')}</p>
+        <p class="ok">Reachable — {testResult.output_plugins} output plugins found</p>
       {:else}
         <p class="error">Cannot reach {testResult.monitor_url}: {testResult.error}</p>
       {/if}
@@ -89,22 +82,12 @@
   </form>
 {/if}
 
-<script module>
-  function portRange(url, workers) {
-    const m = url.match(/:(\d+)$/);
-    if (!m) return '24220';
-    const p = Number(m[1]);
-    return workers > 1 ? `${p}–${p + workers - 1}` : `${p}`;
-  }
-</script>
-
 <style>
   .head { margin-bottom: 1rem; }
   h1 { margin: 0; font-size: 1.3rem; }
   form { display: flex; flex-direction: column; gap: 1rem; max-width: 34rem; }
   h1, .muted { margin-bottom: 0; }
   label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.85rem; }
-  input[type="number"] { width: 5rem; }
   .mono { font-family: ui-monospace, monospace; }
   .row { display: flex; gap: 1rem; align-items: center; }
   .ok { color: var(--ok); margin: 0; }

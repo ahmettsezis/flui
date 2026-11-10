@@ -6,17 +6,17 @@ import (
 	"time"
 )
 
-func insertSamples(ctx context.Context, tx *sql.Tx, nodeID int64, ts time.Time, worker int, ps []PluginMetrics) error {
-	stmt, err := tx.PrepareContext(ctx, `INSERT INTO plugin_samples (node_id, ts, worker, plugin_id, type,
+func insertSamples(ctx context.Context, tx *sql.Tx, nodeID int64, ts time.Time, ps []PluginMetrics) error {
+	stmt, err := tx.PrepareContext(ctx, `INSERT INTO plugin_samples (node_id, ts, plugin_id, type,
 		buffer_queue_length, buffer_queue_byte_size, buffer_stage_length, buffer_stage_byte_size, buffer_total_queued_size,
 		buffer_available_ratio, retry_count, emit_records, emit_count, write_count, rollback_count, slow_flush_count, flush_time_count)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
 		return err
 	}
 	defer func() { _ = stmt.Close() }()
 	for _, p := range ps {
-		if _, err := stmt.ExecContext(ctx, nodeID, ts.Unix(), worker, p.PluginID, p.Type,
+		if _, err := stmt.ExecContext(ctx, nodeID, ts.Unix(), p.PluginID, p.Type,
 			intOrNil(p.BufferQueueLength), intOrNil(p.BufferQueueByteSize), intOrNil(p.BufferStageLength),
 			intOrNil(p.BufferStageByteSize), intOrNil(p.BufferTotalQueuedSize), floatOrNil(p.BufferAvailableRatio),
 			intOrNil(p.RetryCount), intOrNil(p.EmitRecords), intOrNil(p.EmitCount), intOrNil(p.WriteCount),
@@ -41,9 +41,8 @@ func floatOrNil(v *float64) any {
 	return *v
 }
 
-// PluginSeries is the time series of one output plugin on one worker. Values are aligned with TS; nil means no data.
+// PluginSeries is the time series of one output plugin. Values are aligned with TS; nil means no data.
 type PluginSeries struct {
-	Worker   int     `json:"worker"`
 	PluginID string  `json:"plugin_id"`
 	Type     string  `json:"type"`
 	TS       []int64 `json:"ts"`
@@ -71,10 +70,10 @@ func Series(ctx context.Context, db *sql.DB, nodeID int64, from, to time.Time, s
 	if step < 1 {
 		step = 1
 	}
-	rows, err := db.QueryContext(ctx, `SELECT worker, plugin_id, type, ts, buffer_total_queued_size, buffer_queue_length,
+	rows, err := db.QueryContext(ctx, `SELECT plugin_id, type, ts, buffer_total_queued_size, buffer_queue_length,
 		buffer_stage_length, buffer_available_ratio, emit_records, write_count, retry_count
 		FROM plugin_samples WHERE node_id = ? AND ts >= ? AND ts <= ?
-		ORDER BY worker, plugin_id, ts`, nodeID, from.Unix()-step, to.Unix())
+		ORDER BY plugin_id, ts`, nodeID, from.Unix()-step, to.Unix())
 	if err != nil {
 		return nil, err
 	}
@@ -91,18 +90,17 @@ func Series(ctx context.Context, db *sql.DB, nodeID int64, from, to time.Time, s
 	}
 	for rows.Next() {
 		var (
-			worker                            int
 			pluginID, typ                     string
 			ts                                int64
 			queued, queueLen, stageLen, avail sql.NullFloat64
 			emit, write, retry                sql.NullFloat64
 		)
-		if err := rows.Scan(&worker, &pluginID, &typ, &ts, &queued, &queueLen, &stageLen, &avail, &emit, &write, &retry); err != nil {
+		if err := rows.Scan(&pluginID, &typ, &ts, &queued, &queueLen, &stageLen, &avail, &emit, &write, &retry); err != nil {
 			return nil, err
 		}
-		if cur == nil || cur.Worker != worker || cur.PluginID != pluginID {
+		if cur == nil || cur.PluginID != pluginID {
 			flush()
-			cur, buckets = &PluginSeries{Worker: worker, PluginID: pluginID, Type: typ}, nil
+			cur, buckets = &PluginSeries{PluginID: pluginID, Type: typ}, nil
 		}
 		bts := ts / step * step
 		if len(buckets) == 0 || buckets[len(buckets)-1].ts != bts {

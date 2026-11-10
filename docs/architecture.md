@@ -19,7 +19,7 @@ flui is a single Go binary, built without CGO, with no runtime dependencies.
 
 ## Data flow
 
-1. **Metrics:** `collector` requests `/api/plugins.json` from each node (and each worker port) every
+1. **Metrics:** `collector` requests `/api/plugins.json` from each node every
    `collector.interval`, converts counters to rates and writes a sample to `plugin_samples`.
 2. **Cleanup:** `jobs` deletes samples older than the configured [retention](configuration.md#retention)
    and prunes expired sessions once an hour.
@@ -29,7 +29,7 @@ flui is a single Go binary, built without CGO, with no runtime dependencies.
 | Table | Content |
 |---|---|
 | `nodes` | Monitored Fluentd instances |
-| `plugin_samples` | Time series, one row per node / worker / plugin / timestamp |
+| `plugin_samples` | Time series, one row per node / plugin / timestamp |
 | `users`, `sessions` | Authentication |
 | `audit_log` | Security-relevant events |
 | `settings` | Runtime settings |

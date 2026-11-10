@@ -22,16 +22,13 @@ flui shows the `monitor_agent` snippet below after the node is created.
 </source>
 ```
 
-**Multiple workers:** with `<system> workers N </system>`, each worker listens on `port + worker_id`
-(24220, 24221, …). Set **Workers = N** on the node in flui and all of them are collected.
-
 Reload Fluentd (`sudo systemctl reload fluentd`). The node turns **Up** in flui within one collection interval.
 
 ## Network and firewall
 
 | From | To | Port | Purpose |
 |---|---|---|---|
-| flui server | Fluentd host | TCP 24220 (+ one per extra worker) | Metrics pull |
+| flui server | Fluentd host | TCP 24220 | Metrics pull |
 
 `monitor_agent` has **no authentication and no TLS**. Allow port 24220 **only from the flui server's IP**, for example:
 
@@ -62,13 +59,13 @@ A node is shown as **Down** when it cannot be reached and **Stale** when no data
 
 ## Reading the node dashboard
 
-The overview charts aggregate all reported output plugins and workers. Buffered bytes, queued chunks and
+The overview charts aggregate all reported output plugins. Buffered bytes, queued chunks and
 record rates are summed by timestamp; free buffer is the **lowest** reported percentage, not disk space.
 Missing values are excluded, not treated as zero. Buffer charts sum each plugin's peak in each time bucket,
 so they are not an exact simultaneous peak. Output rates can count the same record more than once if it
 passes through multiple outputs.
 
-The plugin table shows each plugin's latest bucket in the selected range. Search by ID, type or worker;
+The plugin table shows each plugin's latest bucket in the selected range. Search by ID or type;
 click a column heading to sort. **Attention first** prioritizes plugins with increasing retries or less
 than 10% free buffer. The activity filter includes these plus plugins with buffered data or output activity.
 The retry counter is cumulative and does not alone indicate a current failure. **Earlier sample** marks

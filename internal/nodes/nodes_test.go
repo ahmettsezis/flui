@@ -30,13 +30,9 @@ func TestNormalizeMonitorURL(t *testing.T) {
 	}
 }
 
-func TestWorkerURLAndSnippet(t *testing.T) {
-	u, err := WorkerURL("http://10.0.0.21:24220", 2)
-	if err != nil || u != "http://10.0.0.21:24222" {
-		t.Errorf("WorkerURL = %q, %v", u, err)
-	}
-	s := Snippet(Node{Name: "web-1", MonitorURL: "http://10.0.0.21:24220", Workers: 4})
-	for _, want := range []string{"bind 10.0.0.21", "port 24220", "include_config false", "TCP 24220-24223"} {
+func TestSnippet(t *testing.T) {
+	s := Snippet(Node{Name: "web-1", MonitorURL: "http://10.0.0.21:24220"})
+	for _, want := range []string{"bind 10.0.0.21", "port 24220", "include_config false", "TCP 24220"} {
 		if !strings.Contains(s, want) {
 			t.Errorf("snippet missing %q:\n%s", want, s)
 		}
@@ -56,7 +52,7 @@ func TestRepoCRUD(t *testing.T) {
 	r := NewRepo(st.DB)
 
 	n, err := r.Create(ctx, Input{Name: "web-1", MonitorURL: "10.0.0.21"})
-	if err != nil || n.ID == 0 || n.Workers != 1 || n.MonitorURL != "http://10.0.0.21:24220" {
+	if err != nil || n.ID == 0 || n.MonitorURL != "http://10.0.0.21:24220" {
 		t.Fatalf("create: %+v %v", n, err)
 	}
 	if _, err := r.Create(ctx, Input{Name: "WEB-1", MonitorURL: "10.0.0.22"}); !errors.Is(err, ErrDuplicate) {
@@ -66,8 +62,8 @@ func TestRepoCRUD(t *testing.T) {
 	if _, err := r.Create(ctx, Input{Name: "<script>", MonitorURL: "10.0.0.22"}); !errors.As(err, &verr) || verr.Field != "name" {
 		t.Errorf("invalid name: %v", err)
 	}
-	n, err = r.Update(ctx, n.ID, Input{Name: "web-01", MonitorURL: "http://10.0.0.21:24230", Workers: 2})
-	if err != nil || n.Name != "web-01" || n.Workers != 2 {
+	n, err = r.Update(ctx, n.ID, Input{Name: "web-01", MonitorURL: "http://10.0.0.21:24230"})
+	if err != nil || n.Name != "web-01" || n.MonitorURL != "http://10.0.0.21:24230" {
 		t.Fatalf("update: %+v %v", n, err)
 	}
 	if _, err := r.Update(ctx, 999, Input{Name: "x", MonitorURL: "x"}); !errors.Is(err, ErrNotFound) {
